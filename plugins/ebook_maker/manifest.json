@@ -1,0 +1,59 @@
+{
+  "id": "ebook_maker",
+  "name": "电子书制作",
+  "version": "0.1.0",
+  "description": "TXT / Markdown / EPUB 互转，自动识别章节标题，制作带封面和完整元数据的电子书",
+  "icon": "📚",
+  "actions": [
+    {
+      "id": "txt_to_md",
+      "name": "TXT → Markdown",
+      "description": "自动识别章节标题（第X章 / Chapter / 中文数字等 9 种格式），生成结构化 Markdown",
+      "input": "file",
+      "accept": ".txt",
+      "params": []
+    },
+    {
+      "id": "md_to_epub",
+      "name": "Markdown → EPUB",
+      "description": "将 Markdown 打包为 EPUB 电子书，可设置封面、ISBN、出版社等元数据",
+      "input": "file",
+      "accept": ".md,.markdown",
+      "params": [
+        { "name": "title", "label": "书名", "type": "text", "placeholder": "默认取文件名", "hint": "留空则使用文件名" },
+        { "name": "author", "label": "作者", "type": "text" },
+        { "name": "publisher", "label": "出版社", "type": "text" },
+        { "name": "isbn", "label": "ISBN", "type": "text" },
+        { "name": "cover", "label": "封面", "type": "text", "placeholder": "本地路径或 http(s) 图片链接" },
+        { "name": "date", "label": "出版日期", "type": "text", "placeholder": "如 2026-01-01" },
+        { "name": "description", "label": "简介", "type": "text" },
+        { "name": "rights", "label": "版权信息", "type": "text" },
+        { "name": "subject", "label": "分类", "type": "text" }
+      ]
+    },
+    {
+      "id": "txt_to_epub",
+      "name": "TXT → EPUB",
+      "description": "一站式转换：TXT 自动转 Markdown 再打包 EPUB，可设置元数据与封面",
+      "input": "file",
+      "accept": ".txt",
+      "params": [
+        { "name": "title", "label": "书名", "type": "text", "placeholder": "默认取文件名", "hint": "留空则使用文件名" },
+        { "name": "author", "label": "作者", "type": "text" },
+        { "name": "publisher", "label": "出版社", "type": "text" },
+        { "name": "isbn", "label": "ISBN", "type": "text" },
+        { "name": "cover", "label": "封面", "type": "text", "placeholder": "本地路径或 http(s) 图片链接" },
+        { "name": "date", "label": "出版日期", "type": "text", "placeholder": "如 2026-01-01" },
+        { "name": "description", "label": "简介", "type": "text" }
+      ]
+    },
+    {
+      "id": "epub_to_md",
+      "name": "EPUB → Markdown",
+      "description": "反向转换：将 EPUB 电子书还原为 Markdown 文本，便于编辑再加工",
+      "input": "file",
+      "accept": ".epub",
+      "params": []
+    }
+  ]
+}

@@ -1,0 +1,3 @@
+# 音频工具插件依赖：imageio-ffmpeg 自带 ffmpeg 二进制，无需用户额外安装 ffmpeg
+# （若系统 PATH 中已存在 ffmpeg，会自动优先使用系统版本）
+imageio-ffmpeg>=0.5

@@ -1,0 +1,53 @@
+{
+  "id": "douyin_download",
+  "name": "抖音下载",
+  "version": "0.1.0",
+  "description": "按链接或视频 ID 下载抖音无水印视频 / 提取音频（支持网页链接、短链、纯数字 ID）",
+  "icon": "🎵",
+  "actions": [
+    {
+      "id": "download_video",
+      "name": "下载视频",
+      "description": "输入抖音链接或视频 ID，下载无水印 MP4 视频",
+      "input": "text",
+      "params": [
+        {
+          "name": "link",
+          "label": "链接或视频 ID",
+          "type": "text",
+          "required": true,
+          "placeholder": "https://www.douyin.com/video/xxxx 或 19 位数字 ID",
+          "hint": "支持含 modal_id= 的分享链接、v.douyin.com 短链、纯数字视频 ID"
+        }
+      ]
+    },
+    {
+      "id": "download_audio",
+      "name": "下载音频",
+      "description": "输入抖音链接或视频 ID，提取音频（m4a 为无损搬运原始音轨；flac 为无损容器封装；音质均与源一致）",
+      "input": "text",
+      "params": [
+        {
+          "name": "link",
+          "label": "链接或视频 ID",
+          "type": "text",
+          "required": true,
+          "placeholder": "https://v.douyin.com/xxxx/ 或 19 位数字 ID",
+          "hint": "支持含 modal_id= 的分享链接、v.douyin.com 短链、纯数字视频 ID"
+        },
+        {
+          "name": "format",
+          "label": "音频格式",
+          "type": "select",
+          "default": "mp3",
+          "options": [
+            { "value": "m4a", "label": "m4a" },
+            { "value": "mp3", "label": "mp3" },
+            { "value": "flac", "label": "flac" }
+          ],
+          "hint": "m4a 无损搬运原始音轨（文件最小）· mp3 兼容场景 · flac 无损封装"
+        }
+      ]
+    }
+  ]
+}

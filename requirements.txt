@@ -1,0 +1,4 @@
+# office-toolbox 壳依赖（仅壳本身，插件依赖由各插件自己的 requirements.txt 管理，首次使用时按需安装）
+fastapi>=0.110
+uvicorn>=0.29
+python-multipart>=0.0.9

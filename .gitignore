@@ -1,0 +1,52 @@
+# 字节码 / 缓存
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# 虚拟环境
+.venv/
+venv/
+env/
+ENV/
+
+# 打包 / 安装
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# 用户本地配置（含密钥，禁止提交）
+config.yaml
+config.local.yaml
+.env
+*.secret
+
+# 输出目录（运行产物）
+output/
+results/
+downloads/
+exports/
+
+# 日志
+*.log
+logs/
+
+# 测试 / 覆盖率
+.pytest_cache/
+.coverage
+htmlcov/
+
+# 编辑器 / 系统
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# 临时文件
+*.tmp
+*.bak
+.cache/
+
+# 本地测试样例
+tests_sample.*

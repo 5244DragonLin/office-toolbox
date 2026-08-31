@@ -1,0 +1,68 @@
+{
+  "id": "audio_tools",
+  "name": "音频切分工具",
+  "version": "0.1.0",
+  "description": "音频处理工具集：按时间点 / 等长片段切分音频，可保持原格式（无损流拷贝）或转码输出",
+  "icon": "🎧",
+  "actions": [
+    {
+      "id": "split_audio",
+      "name": "音频切分",
+      "description": "上传音频，按时间点或多个等长片段切分，下载切分后的各段音频",
+      "input": "file",
+      "accept": ".mp3,.wav,.flac,.m4a,.aac,.ogg,.wma,.opus,.aiff",
+      "preview": "audio",
+      "params": [
+        {
+          "name": "mode",
+          "label": "切分方式",
+          "type": "select",
+          "default": "points",
+          "options": [
+            { "value": "points", "label": "按时间点切分" },
+            { "value": "equal", "label": "按等长片段切分" }
+          ],
+          "hint": "按时间点：输入多个切分位置，切成对应区间；按等长：每段固定时长"
+        },
+        {
+          "name": "points",
+          "label": "切分点",
+          "type": "text",
+          "showWhen": { "mode": "points" },
+          "placeholder": "如 0:30,1:30,2:45",
+          "hint": "多个点用逗号分隔，支持 分:秒（0:30）或纯秒（90）写法；例：输入 1:00,2:00 得到 3 段"
+        },
+        {
+          "name": "duration",
+          "label": "每段时长（秒）",
+          "type": "number",
+          "showWhen": { "mode": "equal" },
+          "placeholder": "如 30",
+          "hint": "切分方式选「按等长片段」时必填"
+        },
+        {
+          "name": "format",
+          "label": "输出格式",
+          "type": "select",
+          "default": "same",
+          "options": [
+            { "value": "same", "label": "保持原格式（推荐）" },
+            { "value": "mp3", "label": "MP3" },
+            { "value": "wav", "label": "WAV" },
+            { "value": "flac", "label": "FLAC" },
+            { "value": "m4a", "label": "M4A (AAC)" }
+          ],
+          "hint": "保持原格式 = 无损流拷贝、速度快；转其他格式 = 重新编码（时间轴更精确）"
+        },
+        {
+          "name": "skip",
+          "label": "快进/快退步长（秒）",
+          "type": "number",
+          "default": "1",
+          "placeholder": "如 1",
+          "hint": "点预览区的「前进 / 后退」按钮时跳转的秒数（默认 1 秒），不影响切分结果"
+        }
+      ]
+    }
+  ]
+}

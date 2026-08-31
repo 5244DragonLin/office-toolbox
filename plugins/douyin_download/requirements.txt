@@ -1,0 +1,11 @@
+# 抖音下载插件依赖说明
+# ---------------------------------------------------------------------------
+# 系统级二进制（非 pip 包，需本机自带）：
+#   - curl  : Windows 10+ 已内置在 C:\WINDOWS\system32\curl，无需安装
+#   - ffmpeg: 由下面的 imageio-ffmpeg 提供静态二进制，无需单独安装到系统
+# Python 依赖：
+#   - gmssl        : ABogus 签名算法（abogus.py）用到，必须安装
+#   - imageio-ffmpeg: 自带跨平台静态 ffmpeg 二进制，音频提取依赖它
+# 说明：requests / curl_cffi 本项目未使用，已移除。
+gmssl>=3.2.2
+imageio-ffmpeg>=0.5

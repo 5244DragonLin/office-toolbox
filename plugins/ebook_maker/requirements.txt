@@ -1,0 +1,6 @@
+# 电子书插件依赖（按需安装：首次使用该插件时才安装）
+ebooklib>=0.18
+markdown>=3.5
+beautifulsoup4>=4.12
+html2text>=2024.2.26
+Pillow>=10.0

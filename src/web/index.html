@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>office-toolbox · 个人办公工具箱</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20100%20100'%3E%3Ctext%20y='.9em'%20font-size='90'%3E%F0%9F%A7%B0%3C/text%3E%3C/svg%3E">
+<style>
+  :root {
+    --bg: #f5f6f8; --card: #ffffff; --border: #e3e6ea;
+    --text: #1f2329; --muted: #7a828e; --accent: #2f6fed;
+    --accent-bg: #eef3fe; --radius: 12px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: "Segoe UI", "Microsoft YaHei", sans-serif; background: var(--bg); color: var(--text); }
+  .topbar { display: flex; align-items: center; gap: 12px; padding: 14px 28px; background: var(--card); border-bottom: 1px solid var(--border); }
+  .topbar .logo { font-size: 18px; font-weight: 600; }
+  .topbar .sub { font-size: 12px; color: var(--muted); }
+  .topbar .btn-back { margin-left: auto; display: none; padding: 6px 14px; border: 1px solid var(--border); border-radius: 8px; background: #fff; cursor: pointer; font-size: 13px; color: var(--text); }
+  .topbar .btn-back:hover { background: var(--accent-bg); }
+
+  .view { max-width: 1080px; margin: 0 auto; padding: 28px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px; }
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; cursor: pointer; transition: all .15s; }
+  .card:hover { border-color: var(--accent); box-shadow: 0 4px 14px rgba(47,111,237,.08); transform: translateY(-2px); }
+  .card .name { font-size: 16px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+  .card .desc { font-size: 13px; color: var(--muted); margin: 8px 0 12px; line-height: 1.6; }
+  .card .actions { font-size: 12px; color: var(--accent); background: var(--accent-bg); border-radius: 6px; padding: 4px 10px; display: inline-block; }
+  .empty { text-align: center; color: var(--muted); padding: 80px 0; }
+
+  .tool-layout { display: flex; gap: 20px; align-items: flex-start; }
+  .tool-side { width: 240px; flex-shrink: 0; background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+  .tool-side .t-item { padding: 12px 16px; cursor: pointer; font-size: 14px; border-bottom: 1px solid var(--border); }
+  .tool-side .t-item:hover { background: var(--accent-bg); }
+  .tool-side .t-item.active { background: var(--accent-bg); border-left: 3px solid var(--accent); font-weight: 600; }
+  .tool-side .t-item .t-desc { font-size: 12px; color: var(--muted); margin-top: 2px; font-weight: 400; }
+  .tool-main { flex: 1; background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; }
+  .tool-main h2 { font-size: 17px; margin-bottom: 6px; }
+  .tool-main .hint { font-size: 13px; color: var(--muted); margin-bottom: 18px; }
+  .field { margin-bottom: 16px; }
+  .field label { display: block; font-size: 13px; margin-bottom: 6px; font-weight: 500; }
+  .field input[type=text], .field input[type=number], .field select { width: 100%; padding: 9px 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 14px; background: #fff; }
+  .field input:focus, .field select:focus { outline: none; border-color: var(--accent); }
+  .drop { border: 2px dashed var(--border); border-radius: 10px; padding: 26px; text-align: center; color: var(--muted); font-size: 13px; cursor: pointer; transition: all .15s; }
+  .drop:hover, .drop.drag { border-color: var(--accent); background: var(--accent-bg); }
+  .drop .file-list { margin-top: 10px; text-align: left; color: var(--text); }
+  .drop .file-list div { font-size: 12px; padding: 2px 0; }
+  .btn { margin-top: 8px; padding: 10px 22px; background: var(--accent); color: #fff; border: none; border-radius: 8px; font-size: 14px; cursor: pointer; }
+  .btn:disabled { opacity: .6; cursor: not-allowed; }
+  .btn-mini { padding: 6px 12px; background: var(--accent-bg); color: var(--accent); border: 1px solid var(--accent); border-radius: 8px; font-size: 13px; cursor: pointer; }
+  .btn-mini:hover { background: var(--accent); color: #fff; }
+  .btn-mini:disabled { opacity: .5; cursor: not-allowed; }
+  #audioPreview audio { width: 100%; display: block; margin: 6px 0 10px; }
+  .audio-toolbar { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .audio-toolbar .at-time { font-size: 13px; font-weight: 600; color: var(--text); min-width: 120px; }
+  .audio-toolbar .at-tip { font-size: 12px; color: #1f7a3d; }
+  .audio-toolbar .at-warn { font-size: 12px; color: #b8860b; }
+  .result { margin-top: 18px; border-top: 1px solid var(--border); padding-top: 14px; }
+  .result a { display: inline-block; margin: 4px 8px 4px 0; padding: 6px 12px; background: #e9f6ec; color: #1f7a3d; border-radius: 6px; font-size: 13px; text-decoration: none; }
+  .file-row { display: flex; align-items: center; gap: 8px; padding: 7px 10px; border: 1px solid var(--border); border-radius: 8px; margin-bottom: 6px; cursor: pointer; font-size: 13px; }
+  .file-row:hover { background: var(--accent-bg); }
+  .file-row .f-main { font-weight: 500; }
+  .file-row .f-sub { color: var(--muted); font-size: 12px; }
+  .dl-bar { display: flex; align-items: center; gap: 14px; margin-top: 12px; flex-wrap: wrap; }
+  .dl-bar .check { margin-top: 0; }
+  .error { margin-top: 14px; padding: 10px 14px; background: #fdecec; color: #c0392b; border-radius: 8px; font-size: 13px; }
+  .check { font-size: 12px; color: var(--muted); margin-top: 10px; }
+  /* ===== 自定义确认弹窗 ===== */
+  .modal-mask { position: fixed; inset: 0; background: rgba(15,23,42,.45); backdrop-filter: blur(3px); display: flex; align-items: center; justify-content: center; z-index: 999; opacity: 0; transition: opacity .18s; }
+  .modal-mask.show { opacity: 1; }
+  .modal { width: 380px; max-width: calc(100vw - 40px); background: var(--card); border-radius: 14px; box-shadow: 0 18px 50px rgba(15,23,42,.28); padding: 26px 26px 20px; transform: scale(.92); transition: transform .18s; }
+  .modal-mask.show .modal { transform: scale(1); }
+  .modal .m-icon { font-size: 34px; text-align: center; margin-bottom: 12px; }
+  .modal .m-title { font-size: 16px; font-weight: 600; text-align: center; margin-bottom: 10px; }
+  .modal .m-msg { font-size: 13px; color: var(--muted); line-height: 1.7; text-align: center; margin-bottom: 6px; white-space: pre-line; }
+  .modal .m-actions { display: flex; gap: 10px; margin-top: 20px; }
+  .modal .m-btn { flex: 1; padding: 9px 0; border-radius: 9px; font-size: 14px; cursor: pointer; border: 1px solid var(--border); background: #fff; color: var(--text); transition: all .15s; }
+  .modal .m-btn:hover { background: var(--accent-bg); }
+  .modal .m-btn.primary { background: #e74c3c; border-color: #e74c3c; color: #fff; }
+  .modal .m-btn.primary:hover { background: #d63a2a; }
+  @media (max-width: 760px) { .tool-layout { flex-direction: column; } .tool-side { width: 100%; } }
+</style>
+</head>
+<body>
+<div class="topbar">
+  <span class="logo" id="logoHome" title="返回首页" style="cursor:pointer">🧰 office-toolbox</span>
+  <span class="sub">个人办公工具箱 · 壳 + 插件，按需加载</span>
+  <button class="btn-back" id="btnBack">← 返回首页</button>
+</div>
+
+<div class="view" id="viewHome">
+  <div class="grid" id="cardGrid"></div>
+</div>
+
+<div class="view" id="viewTool" style="display:none">
+  <div class="tool-layout">
+    <div class="tool-side" id="actionList"></div>
+    <div class="tool-main">
+      <h2 id="actTitle"></h2>
+      <div class="hint" id="actHint"></div>
+      <div class="field">
+        <label>选择文件</label>
+        <div class="drop" id="dropZone">
+          <div id="dropText">点击或拖拽文件到此处</div>
+          <div class="file-list" id="fileList"></div>
+        </div>
+      </div>
+      <div class="field" id="audioPreview" style="display:none">
+        <label>🎧 音频预览（← → 方向键快进/快退 · 拖拽进度条 / 暂停到想切的位置，点下方按钮加入切分点）</label>
+        <audio id="audioPlayer" controls preload="metadata"></audio>
+        <div class="audio-toolbar">
+          <span class="at-time" id="audioTime">--:-- / --:--</span>
+          <button class="btn-mini" id="btnSkipBack">⏮ 后退 -1s</button>
+          <button class="btn-mini" id="btnFwd">前进 +1s ⏭</button>
+          <button class="btn-mini" id="btnMark">⏱ 取当前时间 → 加入切分点</button>
+          <span class="at-tip" id="markTip"></span>
+          <span class="at-warn" id="audioWarn" style="display:none"></span>
+        </div>
+      </div>
+      <div id="paramFields"></div>
+      <button class="btn" id="btnRun">开始转换</button>
+      <div class="check" id="tipLine"></div>
+      <div class="result" id="resultBox"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const $ = s => document.querySelector(s);
+let plugins = [], current = null, currentAction = null, selectedFiles = [];
+// 已转换但尚未下载的结果文件（返回首页时若存在则提示并清理，对所有工具生效）
+let pendingFiles = [];
+
+async function load() {
+  const res = await fetch('/api/plugins');
+  const data = await res.json();
+  plugins = data.plugins || [];
+  renderCards();
+}
+
+function renderCards() {
+  const grid = $('#cardGrid');
+  if (!plugins.length) { grid.innerHTML = '<div class="empty">还没有安装任何插件。<br>把插件文件夹放进 plugins/ 目录后刷新即可。</div>'; return; }
+  grid.innerHTML = plugins.map(p => `
+    <div class="card" onclick="openPlugin('${p.id}')">
+      <div class="name">${p.icon || '🧰'} ${p.name} <span style="font-size:11px;color:var(--muted);font-weight:400">v${p.version}</span></div>
+      <div class="desc">${p.description}</div>
+      <span class="actions">${p.actions.length} 个子功能 · 按需加载</span>
+    </div>`).join('');
+}
+
+function openPlugin(pid) {
+  current = plugins.find(p => p.id === pid);
+  if (!current) return;
+  selectedFiles = []; currentAction = null;
+  pendingFiles = [];  // 切换工具视为放弃之前的未下载结果（文件留待 TTL 自动清理）
+  $('#viewHome').style.display = 'none';
+  $('#viewTool').style.display = 'block';
+  $('#btnBack').style.display = 'block';
+  $('#resultBox').innerHTML = ''; $('#errorBox') && $('#errorBox').remove();
+  const list = $('#actionList');
+  list.innerHTML = current.actions.map((a, i) => `
+    <div class="t-item ${i === 0 ? 'active' : ''}" onclick="selectAction('${a.id}')">
+      ${a.name}
+      <div class="t-desc">${a.description}</div>
+    </div>`).join('');
+  selectAction(current.actions[0].id);
+}
+
+function selectAction(aid) {
+  currentAction = current.actions.find(a => a.id === aid);
+  selectedFiles = [];
+  const items = document.querySelectorAll('#actionList .t-item');
+  items.forEach(el => el.classList.remove('active'));
+  const idx = current.actions.findIndex(a => a.id === aid);
+  if (items[idx]) items[idx].classList.add('active');
+  $('#actTitle').textContent = currentAction.name;
+  $('#actHint').textContent = currentAction.description;
+  $('#fileList').innerHTML = '';
+  resetAudioPreview();
+  const fileFieldEl = $('#dropZone').closest('.field');
+  if (currentAction.input === 'text') {
+    // 文本型动作：只需填写链接/参数，无需上传文件，隐藏文件选择区
+    if (fileFieldEl) fileFieldEl.style.display = 'none';
+    $('#dropText').textContent = '';
+  } else {
+    if (fileFieldEl) fileFieldEl.style.display = '';
+    $('#dropText').textContent = currentAction.input === 'files' ? '点击或拖拽文件到此处（可多选）' : '点击或拖拽文件到此处';
+  }
+  $('#resultBox').innerHTML = ''; $('#errorBox') && $('#errorBox').remove();
+  const drop = $('#dropZone');
+  drop.dataset.accept = (currentAction.accept || '').toLowerCase();
+  renderParams();
+}
+
+function renderParamControl(p) {
+  const id = `param_${p.name}`;
+  if (p.type === 'select') {
+    const opts = (p.options || []).map(o => {
+      const val = (o && o.value !== undefined) ? o.value : o;
+      const lbl = (o && o.label !== undefined) ? o.label : o;
+      const sel = (String(val) === String(p.default || '')) ? ' selected' : '';
+      return `<option value="${val}"${sel}>${lbl}</option>`;
+    }).join('');
+    return `<select id="${id}">${opts}</select>`;
+  }
+  return `<input type="${p.type === 'number' ? 'number' : 'text'}" id="${id}" placeholder="${p.placeholder || ''}" value="${p.default || ''}">`;
+}
+
+function renderParams() {
+  const box = $('#paramFields');
+  const params = currentAction.params || [];
+  if (!params.length) { box.innerHTML = ''; $('#tipLine').textContent = ''; return; }
+  const heading = '参数';
+  box.innerHTML = `<div class="field"><label>${heading}</label></div>` + params.map(p => `
+    <div class="field" data-param="${p.name}">
+      <label>${p.label}${p.required ? ' <span style="color:#c0392b">*</span>' : ''}</label>
+      ${renderParamControl(p)}
+      ${p.hint ? `<div class="check">${p.hint}</div>` : ''}
+    </div>`).join('');
+  // 联动显隐：当某个 select 参数等于指定值时显示/隐藏本参数
+  params.forEach(p => {
+    if (!p.showWhen) return;
+    const fieldEl = box.querySelector(`[data-param="${p.name}"]`);
+    if (!fieldEl) return;
+    Object.entries(p.showWhen).forEach(([triggerName, triggerValue]) => {
+      const triggerEl = $(`#param_${triggerName}`);
+      if (!triggerEl || triggerEl.tagName !== 'SELECT') return;
+      const update = () => {
+        fieldEl.style.display = (String(triggerEl.value) === String(triggerValue)) ? '' : 'none';
+      };
+      triggerEl.addEventListener('change', update);
+      update();
+    });
+  });
+  $('#tipLine').textContent = params.length ? '带 * 的为必填项' : '';
+  syncSkipButtons();
+  const skipEl = $('#param_skip');
+  if (skipEl) skipEl.addEventListener('input', syncSkipButtons);
+}
+
+const drop = $('#dropZone');
+drop.addEventListener('click', () => {
+  const input = document.createElement('input');
+  input.type = 'file'; input.multiple = currentAction.input === 'files';
+  if (currentAction.accept) input.accept = currentAction.accept;
+  input.onchange = () => addFiles(input.files);
+  input.click();
+});
+drop.addEventListener('dragover', e => { e.preventDefault(); drop.classList.add('drag'); });
+drop.addEventListener('dragleave', () => drop.classList.remove('drag'));
+drop.addEventListener('drop', e => { e.preventDefault(); drop.classList.remove('drag'); addFiles(e.dataTransfer.files); });
+
+function addFiles(files) {
+  const accept = (currentAction.accept || '').split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
+  for (const f of files) {
+    const ext = '.' + f.name.split('.').pop().toLowerCase();
+    if (accept.length && !accept.includes(ext) && !accept.includes('.*')) {
+      alert(`不支持的文件类型: ${f.name}（仅支持 ${currentAction.accept}）`);
+      continue;
+    }
+    selectedFiles.push(f);
+  }
+  $('#fileList').innerHTML = selectedFiles.map(f => `<div>📄 ${f.name}</div>`).join('');
+  $('#dropText').textContent = selectedFiles.length ? `已选 ${selectedFiles.length} 个文件，继续点击可添加` : '点击或拖拽文件到此处';
+  updateAudioPreview();
+}
+
+/* ============ 音频预览（插件 manifest 的 action 声明 "preview": "audio" 时启用） ============ */
+let audioObjectURL = null;
+
+function fmtTime(sec) {
+  sec = Math.max(0, Math.floor(sec));
+  const h = Math.floor(sec / 3600), m = Math.floor((sec % 3600) / 60), s = sec % 60;
+  const mm = String(m).padStart(2, '0'), ss = String(s).padStart(2, '0');
+  return h > 0 ? `${h}:${mm}:${ss}` : `${m}:${ss}`;
+}
+
+function resetAudioPreview() {
+  const box = $('#audioPreview');
+  if (audioObjectURL) { URL.revokeObjectURL(audioObjectURL); audioObjectURL = null; }
+  const player = $('#audioPlayer');
+  player.removeAttribute('src'); player.load();
+  $('#audioTime').textContent = '--:-- / --:--';
+  $('#markTip').textContent = '';
+  $('#audioWarn').style.display = 'none';
+  box.style.display = 'none';
+}
+
+function updateAudioPreview() {
+  const player = $('#audioPlayer');
+  const box = $('#audioPreview');
+  resetAudioPreview();
+  const previews = currentAction && currentAction.preview;
+  if (!previews || !selectedFiles.length) return;
+  audioObjectURL = URL.createObjectURL(selectedFiles[0]);
+  player.src = audioObjectURL;
+  box.style.display = '';
+}
+
+function markCurrentTime() {
+  const player = $('#audioPlayer');
+  if (!player.duration || !isFinite(player.duration)) {
+    $('#markTip').textContent = '⏳ 音频还没加载好，稍等再试';
+    return;
+  }
+  let t = Math.round(player.currentTime);
+  const dur = Math.floor(player.duration);
+  if (t >= dur) t = Math.max(0, dur - 1);
+  const firstText = (currentAction.params || []).find(p => p.type === 'text');
+  if (!firstText) { $('#markTip').textContent = '⚠ 该动作没有可填时间的参数'; return; }
+  const el = $(`#param_${firstText.name}`);
+  if (!el) return;
+  const cur = el.value.trim();
+  el.value = cur ? cur + ',' + fmtTime(t) : fmtTime(t);
+  $('#markTip').textContent = `✅ 已加入 ${fmtTime(t)}`;
+  setTimeout(() => { $('#markTip').textContent = ''; }, 2000);
+}
+
+$('#audioPlayer').addEventListener('timeupdate', () => {
+  const p = $('#audioPlayer');
+  if (p.duration && isFinite(p.duration)) {
+    $('#audioTime').textContent = `${fmtTime(p.currentTime)} / ${fmtTime(p.duration)}`;
+  }
+});
+$('#audioPlayer').addEventListener('error', () => {
+  $('#audioWarn').textContent = '⚠ 该格式浏览器无法直接预览（不影响切分，可继续操作）';
+  $('#audioWarn').style.display = '';
+});
+$('#btnMark').addEventListener('click', markCurrentTime);
+
+/* 快进/快退：步长读取参数区的 skip 参数（约定参数名 skip，默认 1 秒） */
+function getSkipStep() {
+  const el = $('#param_skip');
+  if (!el || !el.value) return 1;
+  const n = parseFloat(el.value);
+  return (isFinite(n) && n > 0) ? n : 1;
+}
+
+function skipAudio(dir) {
+  const player = $('#audioPlayer');
+  if (!player.duration || !isFinite(player.duration)) {
+    $('#markTip').textContent = '⏳ 音频还没加载好，稍等再试';
+    return;
+  }
+  const step = getSkipStep();
+  const target = Math.min(Math.max(player.currentTime + dir * step, 0), player.duration);
+  player.currentTime = target;
+}
+
+function syncSkipButtons() {
+  const n = getSkipStep();
+  const back = $('#btnSkipBack'), fwd = $('#btnFwd');
+  if (back) back.textContent = `⏮ 后退 -${n}s`;
+  if (fwd) fwd.textContent = `前进 +${n}s ⏭`;
+}
+
+$('#btnSkipBack').addEventListener('click', () => skipAudio(-1));
+$('#btnFwd').addEventListener('click', () => skipAudio(1));
+
+/* 键盘 ← → 快进/快退：仅音频预览可用时生效；焦点在输入框时不拦截（避免影响移动光标/打字）
+   用捕获阶段（第三个参数 true）：点击播放器内部控件后焦点在 Shadow DOM 里，
+   浏览器会把方向键当作媒体控制拦截，捕获阶段可在其之前先收到按键。 */
+document.addEventListener('keydown', e => {
+  if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+  const tag = (e.target && e.target.tagName) || '';
+  if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+  const box = $('#audioPreview');
+  if (!box || box.style.display === 'none') return;
+  const player = $('#audioPlayer');
+  if (!player || !player.src) return;
+  e.preventDefault(); // 阻止浏览器对焦点内媒体控件的默认方向键行为
+  e.stopPropagation(); // 阻止事件继续传到播放器内部控件（避免原生媒体控制再执行一次 seek）
+  skipAudio(e.key === 'ArrowLeft' ? -1 : 1);
+}, true);
+
+$('#btnRun').addEventListener('click', async () => {
+  const btn = $('#btnRun');
+  if (currentAction.input !== 'text' && !selectedFiles.length) { alert('请先选择文件'); return; }
+  for (const p of (currentAction.params || [])) {
+    if (p.required) {
+      const el = $(`#param_${p.name}`);
+      if (!el || !el.value.trim()) { alert(`请填写必填项：${p.label}`); return; }
+    }
+  }
+  btn.disabled = true; btn.textContent = '处理中…';
+  $('#resultBox').innerHTML = ''; $('#errorBox') && $('#errorBox').remove();
+  const fd = new FormData();
+  selectedFiles.forEach(f => fd.append('files', f));
+  const params = {};
+  (currentAction.params || []).forEach(p => {
+    const v = $(`#param_${p.name}`).value.trim();
+    if (v !== '') params[p.name] = p.type === 'number' ? Number(v) : v;
+  });
+  fd.append('params', JSON.stringify(params));
+  try {
+    const res = await fetch(`/api/plugins/${current.id}/run/${currentAction.id}`, { method: 'POST', body: fd });
+    const data = await res.json();
+    if (!data.success) { showError(data.error || '转换失败'); return; }
+    renderResults(data);
+  } catch (e) {
+    showError('请求失败: ' + e.message);
+  } finally {
+    btn.disabled = false; btn.textContent = '开始转换';
+  }
+});
+
+/* ============ 结果渲染：多文件时可勾选下载（通用能力，插件返回 start/end 时展示片段区间） ============ */
+async function downloadFiles(list) {
+  for (const f of list) {
+    try {
+      const resp = await fetch(f.url);
+      const blob = await resp.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = f.name;
+      document.body.appendChild(a); a.click(); a.remove();
+      URL.revokeObjectURL(url);
+    } catch (e) { console.error('下载失败:', f.name, e); }
+  }
+}
+
+/* 清理本次任务的全部结果文件（下载选中的被"下载即焚"，未选中的在这里一并删除，不再等待 TTL） */
+async function cleanupTaskFiles(files) {
+  for (const f of files) {
+    try { await fetch(f.url, { method: 'DELETE' }); } catch (e) { /* 已焚毁的文件返回 404，忽略 */ }
+  }
+}
+
+function renderResults(data) {
+  const files = data.files || [];
+  pendingFiles = files;  // 记录本次未下载的转换结果，供返回首页时提示清理
+  if (files.length === 1) {
+    const f = files[0];
+    $('#resultBox').innerHTML = `
+      <div style="font-size:13px;font-weight:600;margin-bottom:6px">✅ 转换完成：</div>
+      <a href="${f.url}" download>⬇ ${f.name}</a>`;
+    // 单文件：点击下载（下载即焚）后视为已处理，返回首页不再提示
+    $('#resultBox a').addEventListener('click', () => { pendingFiles = []; });
+    return;
+  }
+  const rows = files.map((f, i) => {
+    const hasRange = (f.start !== undefined && f.end !== undefined);
+    const range = hasRange ? `${fmtTime(f.start)} - ${fmtTime(f.end)}` : '';
+    return `
+      <label class="file-row">
+        <input type="checkbox" class="dl-check" data-url="${f.url}" data-name="${f.name}">
+        <span class="f-main">第 ${i + 1} 段${range ? ` · ${range}` : ''}</span>
+        <span class="f-sub">${f.name}</span>
+      </label>`;
+  }).join('');
+  $('#resultBox').innerHTML = `
+    <div style="font-size:13px;font-weight:600;margin-bottom:8px">✅ 转换完成，共 ${files.length} 个文件，勾选要下载的：</div>
+    ${rows}
+    <div class="dl-bar">
+      <label style="font-size:13px;cursor:pointer"><input type="checkbox" id="checkAll"> 全选</label>
+      <button class="btn-mini" id="btnDlSel">下载选中 (0)</button>
+      <span class="check">下载后本次任务的文件将全部自动清理</span>
+    </div>`;
+  const checks = [...document.querySelectorAll('.dl-check')];
+  const updateCount = () => {
+    const n = checks.filter(c => c.checked).length;
+    const btn = $('#btnDlSel');
+    if (btn) btn.textContent = `下载选中 (${n})`;
+  };
+  checks.forEach(c => c.addEventListener('change', updateCount));
+  const checkAll = $('#checkAll');
+  if (checkAll) checkAll.addEventListener('change', e => {
+    checks.forEach(c => { c.checked = e.target.checked; });
+    updateCount();
+  });
+    const btn = $('#btnDlSel');
+  if (btn) btn.addEventListener('click', async () => {
+    const sel = checks.filter(c => c.checked).map(c => ({ url: c.dataset.url, name: c.dataset.name }));
+    if (!sel.length) return;
+    btn.disabled = true; btn.textContent = '下载中…';
+    await downloadFiles(sel);
+    await cleanupTaskFiles(files);   // 下载完成，本次任务全部文件立即清理（含未勾选的）
+    pendingFiles = [];  // 已下载并清理，返回首页时不再提示
+    btn.disabled = false; btn.textContent = '✅ 已下载并清理';
+    checks.forEach(c => { c.checked = false; });
+  });
+}
+
+function showError(msg) {
+  const div = document.createElement('div');
+  div.className = 'error'; div.id = 'errorBox'; div.textContent = '❌ ' + msg;
+  $('#resultBox').after(div);
+}
+
+/* ===== 自定义确认弹窗（Promise 封装，替代原生 confirm） =====
+ * options: { icon, title, message, okText, okClass }
+ * resolve(true) = 点击确认；resolve(false) = 点击取消/遮罩/Esc */
+function showConfirm({ icon = '⚠️', title = '提示', message = '', okText = '确定', okClass = 'primary' } = {}) {
+  return new Promise(resolve => {
+    const mask = document.createElement('div');
+    mask.className = 'modal-mask';
+    mask.innerHTML = `
+      <div class="modal" role="dialog" aria-modal="true">
+        <div class="m-icon">${icon}</div>
+        <div class="m-title">${title}</div>
+        <div class="m-msg">${message.replace(/</g, '&lt;')}</div>
+        <div class="m-actions">
+          <button class="m-btn" id="mCancel">取消</button>
+          <button class="m-btn ${okClass}" id="mOk">${okText}</button>
+        </div>
+      </div>`;
+    document.body.appendChild(mask);
+    requestAnimationFrame(() => mask.classList.add('show'));
+    const done = val => {
+      mask.classList.remove('show');
+      setTimeout(() => mask.remove(), 180);
+      resolve(val);
+    };
+    mask.addEventListener('click', e => { if (e.target === mask) done(false); });
+    mask.querySelector('#mCancel').addEventListener('click', () => done(false));
+    mask.querySelector('#mOk').addEventListener('click', () => done(true));
+    const onKey = e => { if (e.key === 'Escape') { done(false); document.removeEventListener('keydown', onKey); } };
+    document.addEventListener('keydown', onKey);
+    // 聚焦确认按钮，回车可确认
+    setTimeout(() => mask.querySelector('#mOk').focus(), 60);
+    mask.querySelector('#mOk').addEventListener('keydown', e => { if (e.key === 'Enter') { e.stopPropagation(); } });
+  });
+}
+
+function goHome() {
+  // 有未下载的转换结果：先提示，确认后删除本次任务全部文件再返回（对所有工具统一生效）
+  if (pendingFiles.length) {
+    const n = pendingFiles.length;
+    const doHome = () => {
+      $('#viewTool').style.display = 'none';
+      $('#viewHome').style.display = 'block';
+      $('#btnBack').style.display = 'none';
+      renderCards();
+    };
+    showConfirm({
+      icon: '🗑️',
+      title: '尚未下载转换结果',
+      message: `有 ${n} 个转换结果尚未下载。\n返回首页将删除这些文件，确定要返回吗？`,
+      okText: '删除并返回',
+      okClass: 'primary',
+    }).then(ok => {
+      if (ok) {
+        cleanupTaskFiles(pendingFiles);
+        pendingFiles = [];
+        doHome();
+      }
+      // 取消：留在当前工具页，文件保留
+    });
+    return;
+  }
+  $('#viewTool').style.display = 'none';
+  $('#viewHome').style.display = 'block';
+  $('#btnBack').style.display = 'none';
+  renderCards();
+}
+
+$('#btnBack').addEventListener('click', goHome);
+$('#logoHome').addEventListener('click', goHome);
+
+load();
+</script>
+</body>
+</html>
