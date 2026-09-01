@@ -442,10 +442,22 @@ function renderResults(data) {
   const rows = files.map((f, i) => {
     const hasRange = (f.start !== undefined && f.end !== undefined);
     const range = hasRange ? `${fmtTime(f.start)} - ${fmtTime(f.end)}` : '';
+    const isImage = /\.(png|jpe?g|webp|gif|bmp|tiff?)$/i.test(f.name) || f.kind === 'cover';
+    if (isImage) {
+      // 封面等图片：明确标注，不内联预览（/downloads 路由下载即焚，内联 <img> 会误删）
+      return `
+        <label class="file-row">
+          <input type="checkbox" class="dl-check" data-url="${f.url}" data-name="${f.name}">
+          <span class="f-main">🖼 封面</span>
+          <span class="f-sub">${f.name}</span>
+        </label>`;
+    }
+    const main = f.kind === 'md' ? '📄 正文'
+               : (hasRange ? `第 ${i + 1} 段${range ? ` · ${range}` : ''}` : `第 ${i + 1} 项`);
     return `
       <label class="file-row">
         <input type="checkbox" class="dl-check" data-url="${f.url}" data-name="${f.name}">
-        <span class="f-main">第 ${i + 1} 段${range ? ` · ${range}` : ''}</span>
+        <span class="f-main">${main}</span>
         <span class="f-sub">${f.name}</span>
       </label>`;
   }).join('');

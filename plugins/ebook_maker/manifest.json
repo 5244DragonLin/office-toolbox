@@ -1,15 +1,15 @@
 {
   "id": "ebook_maker",
   "name": "电子书制作",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "TXT / Markdown / EPUB 互转，自动识别章节标题，制作带封面和完整元数据的电子书",
   "icon": "📚",
   "actions": [
     {
       "id": "txt_to_md",
       "name": "TXT → Markdown",
-      "description": "自动识别章节标题（第X章 / Chapter / 中文数字等 9 种格式），生成结构化 Markdown",
-      "input": "file",
+      "description": "自动识别章节标题（第X章 / Chapter / 中文数字等 9 种格式），生成结构化 Markdown（支持批量转换）",
+      "input": "files",
       "accept": ".txt",
       "params": []
     },
@@ -50,8 +50,8 @@
     {
       "id": "epub_to_md",
       "name": "EPUB → Markdown",
-      "description": "反向转换：将 EPUB 电子书还原为 Markdown 文本，便于编辑再加工",
-      "input": "file",
+      "description": "反向转换：将 EPUB 电子书还原为 Markdown 文本，便于编辑再加工（支持批量转换）",
+      "input": "files",
       "accept": ".epub",
       "params": []
     }

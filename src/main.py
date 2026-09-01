@@ -181,7 +181,9 @@ def download(name: str, background_tasks: BackgroundTasks):
         return JSONResponse({"success": False, "error": "文件不存在或已过期（可能已被自动清理）"}, status_code=404)
     # 响应发送完成后删除本地文件，实现"用完即删"
     background_tasks.add_task(_safe_delete, path)
-    return FileResponse(path, filename=path.name)
+    # 磁盘文件名带任务ID前缀（防多任务同名冲突），下载时去掉，还原干净的原文件名
+    display_name = name.split("_", 1)[1] if "_" in name else name
+    return FileResponse(path, filename=display_name)
 
 
 @app.delete("/downloads/{name}")

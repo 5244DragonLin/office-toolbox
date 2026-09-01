@@ -30,10 +30,25 @@ def _first_file(files: dict) -> Path:
 
 
 def act_txt_to_md(files, params, workdir: Path):
-    src = _first_file(files)
-    out = workdir / f"{src.stem}.md"
-    convert_txt_to_md(src, out)
-    return [out]
+    src_list = files.get("files") or []
+    if not src_list:
+        raise ValueError("未收到输入文件")
+    outputs = []
+    used_names = set()
+    for src_path in src_list:
+        src = Path(src_path)
+        # 同名文件（stem 相同）追加序号，避免批量转换时互相覆盖
+        base = f"{src.stem}.md"
+        if base in used_names:
+            idx = 2
+            while f"{src.stem}_{idx}.md" in used_names:
+                idx += 1
+            base = f"{src.stem}_{idx}.md"
+        used_names.add(base)
+        out = workdir / base
+        convert_txt_to_md(src, out)
+        outputs.append(out)
+    return outputs
 
 
 def act_md_to_epub(files, params, workdir: Path):
@@ -66,10 +81,31 @@ def act_txt_to_epub(files, params, workdir: Path):
 
 
 def act_epub_to_md(files, params, workdir: Path):
-    src = _first_file(files)
-    out = workdir / f"{src.stem}.md"
-    epub_to_markdown(src, output_file=out)
-    return [out]
+    src_list = files.get("files") or []
+    if not src_list:
+        raise ValueError("未收到输入文件")
+    outputs = []
+    used_names = set()
+    for src_path in src_list:
+        src = Path(src_path)
+        # 同名文件（stem 相同）追加序号，避免批量转换时互相覆盖
+        base = f"{src.stem}.md"
+        if base in used_names:
+            idx = 2
+            while f"{src.stem}_{idx}.md" in used_names:
+                idx += 1
+            base = f"{src.stem}_{idx}.md"
+        used_names.add(base)
+        out = workdir / base
+        result = epub_to_markdown(src, output_file=out)
+        if not result:
+            raise ValueError(f"转换失败（{src.name}）：未生成任何内容")
+        # 返回 dict 形式，便于后端把"正文 / 封面"分别标注给前端
+        outputs.append({"path": result.get("md") or str(out), "kind": "md"})
+        cover = result.get("cover")
+        if cover and Path(cover).exists():
+            outputs.append({"path": cover, "kind": "cover"})
+    return outputs
 
 
 ACTIONS = {
