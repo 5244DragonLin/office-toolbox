@@ -1,14 +1,84 @@
 {
   "id": "douyin_download",
   "name": "抖音下载",
-  "version": "0.1.0",
-  "description": "按链接或视频 ID 下载抖音无水印视频 / 提取音频（支持网页链接、短链、纯数字 ID）",
+  "version": "0.7.0",
+  "description": "下载抖音无水印视频/图文（画质可选，默认探测上传原片），提取音频，支持扫码登录",
   "icon": "🎵",
+  "assets": [
+    {
+      "id": "chromium",
+      "type": "playwright",
+      "name": "Chromium 浏览器组件",
+      "description": "「扫码登录抖音」用（Playwright 无头浏览器），首次扫码也会自动下载",
+      "targets": ["chromium", "chromium-headless-shell"],
+      "size_hint": "100~300MB"
+    },
+    {
+      "id": "whisper-tiny",
+      "type": "modelscope",
+      "repo": "Systran/faster-whisper-tiny",
+      "dir": "faster-whisper-tiny",
+      "name": "语音转文字模型 · tiny",
+      "description": "最快最糙，适合短音频快速出稿",
+      "size_hint": "约 75MB"
+    },
+    {
+      "id": "whisper-base",
+      "type": "modelscope",
+      "repo": "Systran/faster-whisper-base",
+      "dir": "faster-whisper-base",
+      "name": "语音转文字模型 · base",
+      "description": "速度与准确度的折中偏快",
+      "size_hint": "约 145MB"
+    },
+    {
+      "id": "whisper-small",
+      "type": "modelscope",
+      "repo": "Systran/faster-whisper-small",
+      "dir": "faster-whisper-small",
+      "name": "语音转文字模型 · small（推荐）",
+      "description": "中文口播推荐起步档，转写动作的默认模型",
+      "size_hint": "约 484MB"
+    },
+    {
+      "id": "whisper-medium",
+      "type": "modelscope",
+      "repo": "Systran/faster-whisper-medium",
+      "dir": "faster-whisper-medium",
+      "name": "语音转文字模型 · medium",
+      "description": "更准更慢，有显卡时可用",
+      "size_hint": "约 1.5GB"
+    },
+    {
+      "id": "whisper-large",
+      "type": "modelscope",
+      "repo": "Systran/faster-whisper-large-v3",
+      "dir": "faster-whisper-large",
+      "name": "语音转文字模型 · large",
+      "description": "最准最慢，体积大，慎选",
+      "size_hint": "约 3GB"
+    }
+  ],
   "actions": [
     {
+      "id": "login_qrcode",
+      "name": "扫码登录抖音",
+      "ui": "login",
+      "description": "抖音 App 扫码登录（弹窗，扫码即用）",
+      "input": "text",
+      "params": []
+    },
+    {
+      "id": "login_logout",
+      "name": "退出登录",
+      "description": "清除抖音登录凭证",
+      "input": "text",
+      "params": []
+    },
+    {
       "id": "download_video",
-      "name": "下载视频",
-      "description": "输入抖音链接或视频 ID，下载无水印 MP4 视频",
+      "name": "下载视频/图文",
+      "description": "下载无水印视频或图文图片",
       "input": "text",
       "params": [
         {
@@ -18,13 +88,34 @@
           "required": true,
           "placeholder": "https://www.douyin.com/video/xxxx 或 19 位数字 ID",
           "hint": "支持含 modal_id= 的分享链接、v.douyin.com 短链、纯数字视频 ID"
+        },
+        {
+          "name": "quality",
+          "label": "画质",
+          "type": "select",
+          "default": "original",
+          "options": [
+            { "value": "original", "label": "原画探测（推荐）" },
+            { "value": "highest", "label": "最高转码档" },
+            { "value": "1080p", "label": "1080p" },
+            { "value": "720p", "label": "720p" }
+          ],
+          "hint": "原画=探测上传原片，确认真比转码档大才用，体积可能大数倍；固定档按画面短边匹配，没有就自动落到最接近的档"
+        },
+        {
+          "name": "cookie",
+          "label": "登录 Cookie（一般不用填）",
+          "type": "text",
+          "required": false,
+          "placeholder": "留空即可，已扫码登录会自动生效",
+          "hint": "推荐直接点「扫码登录抖音」，凭证自动生效；此框仅留给有特殊需要的用户手动粘贴 Cookie"
         }
       ]
     },
     {
       "id": "download_audio",
       "name": "下载音频",
-      "description": "输入抖音链接或视频 ID，提取音频（m4a 为无损搬运原始音轨；flac 为无损容器封装；音质均与源一致）",
+      "description": "提取视频音轨或图文背景音乐",
       "input": "text",
       "params": [
         {
@@ -34,6 +125,14 @@
           "required": true,
           "placeholder": "https://v.douyin.com/xxxx/ 或 19 位数字 ID",
           "hint": "支持含 modal_id= 的分享链接、v.douyin.com 短链、纯数字视频 ID"
+        },
+        {
+          "name": "cookie",
+          "label": "登录 Cookie（一般不用填）",
+          "type": "text",
+          "required": false,
+          "placeholder": "留空即可，已扫码登录会自动生效",
+          "hint": "推荐直接点「扫码登录抖音」，凭证自动生效；此框仅留给有特殊需要的用户手动粘贴 Cookie"
         },
         {
           "name": "format",
@@ -46,6 +145,80 @@
             { "value": "flac", "label": "flac" }
           ],
           "hint": "m4a 无损搬运原始音轨（文件最小）· mp3 兼容场景 · flac 无损封装"
+        }
+      ]
+    },
+    {
+      "id": "transcribe",
+      "name": "下载并转写（语音转文字）",
+      "description": "下载抖音音轨 → 本地 WhisperX 转写为纯文字（.txt）。不保留音视频，只给文字。",
+      "input": "text",
+      "params": [
+        {
+          "name": "link",
+          "label": "链接或视频 ID",
+          "type": "text",
+          "required": true,
+          "placeholder": "https://v.douyin.com/xxxx/ 或 19 位数字 ID",
+          "hint": "支持含 modal_id= 的分享链接、v.douyin.com 短链、纯数字视频 ID"
+        },
+        {
+          "name": "model_size",
+          "label": "模型大小（越大越准越慢）",
+          "type": "select",
+          "default": "small",
+          "options": [
+            { "value": "tiny", "label": "tiny（最快最糙）" },
+            { "value": "base", "label": "base" },
+            { "value": "small", "label": "small（推荐）" },
+            { "value": "medium", "label": "medium（更准更慢）" },
+            { "value": "large", "label": "large（最准最慢）" }
+          ],
+          "hint": "中文视频建议 small 起步；有显卡可上 medium/large。首次使用会自动下载模型"
+        },
+        {
+          "name": "language",
+          "label": "语言（留空自动识别）",
+          "type": "text",
+          "required": false,
+          "placeholder": "zh / en / 留空自动",
+          "hint": "已知语言时填代码可提速提准，如 zh、en"
+        },
+        {
+          "name": "cookie",
+          "label": "登录 Cookie（一般不用填）",
+          "type": "text",
+          "required": false,
+          "placeholder": "留空即可，已扫码登录会自动生效"
+        }
+      ]
+    },
+    {
+      "id": "transcribe_file",
+      "name": "本地音视频转写",
+      "description": "上传本地音视频文件 → 本地 WhisperX 转写为纯文字（.txt）。",
+      "input": "file",
+      "accept": ".mp4,.mkv,.mov,.avi,.mp3,.m4a,.flac,.wav,.webm",
+      "params": [
+        {
+          "name": "model_size",
+          "label": "模型大小（越大越准越慢）",
+          "type": "select",
+          "default": "small",
+          "options": [
+            { "value": "tiny", "label": "tiny（最快最糙）" },
+            { "value": "base", "label": "base" },
+            { "value": "small", "label": "small（推荐）" },
+            { "value": "medium", "label": "medium（更准更慢）" },
+            { "value": "large", "label": "large（最准最慢）" }
+          ]
+        },
+        {
+          "name": "language",
+          "label": "语言（留空自动识别）",
+          "type": "text",
+          "required": false,
+          "placeholder": "zh / en / 留空自动"
         }
       ]
     }

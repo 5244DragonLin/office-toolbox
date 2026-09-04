@@ -61,6 +61,10 @@ class PluginRegistry:
             })
         return result
 
+    def manifests(self) -> list[dict]:
+        """返回全部 manifest 原始数据（设置页读 assets 等完整声明用）。"""
+        return list(self._manifests.values())
+
     def get_action(self, pid: str, aid: str):
         """按插件 id + 动作 id 取 (manifest, action)，找不到返回 (None, None)。"""
         manifest = self._manifests.get(pid)

@@ -1,0 +1,6 @@
+# B站下载插件依赖
+# yutto: 唯一下载引擎（视频/收藏夹/合集/UP主空间/音频/字幕）
+yutto>=2.3.0
+# imageio-ffmpeg: 自带跨平台静态 ffmpeg 二进制（yutto 合并音视频、mp3 转码需要）
+# 若系统已安装 ffmpeg 并加入 PATH，则优先使用系统版
+imageio-ffmpeg>=0.5

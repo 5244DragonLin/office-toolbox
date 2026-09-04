@@ -2,13 +2,13 @@
   "id": "audio_tools",
   "name": "音频切分工具",
   "version": "0.1.0",
-  "description": "音频处理工具集：按时间点 / 等长片段切分音频，可保持原格式（无损流拷贝）或转码输出",
+  "description": "按时间点或等长片段切分音频，支持多种格式",
   "icon": "🎧",
   "actions": [
     {
       "id": "split_audio",
       "name": "音频切分",
-      "description": "上传音频，按时间点或多个等长片段切分，下载切分后的各段音频",
+      "description": "按时间点或等长片段切分音频",
       "input": "file",
       "accept": ".mp3,.wav,.flac,.m4a,.aac,.ogg,.wma,.opus,.aiff",
       "preview": "audio",

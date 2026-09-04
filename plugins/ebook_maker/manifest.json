@@ -2,13 +2,13 @@
   "id": "ebook_maker",
   "name": "电子书制作",
   "version": "0.2.0",
-  "description": "TXT / Markdown / EPUB 互转，自动识别章节标题，制作带封面和完整元数据的电子书",
+  "description": "TXT / Markdown / EPUB 互转，自动识别章节标题，支持封面与元数据",
   "icon": "📚",
   "actions": [
     {
       "id": "txt_to_md",
       "name": "TXT → Markdown",
-      "description": "自动识别章节标题（第X章 / Chapter / 中文数字等 9 种格式），生成结构化 Markdown（支持批量转换）",
+      "description": "TXT 转结构化 Markdown，自动识别章节标题",
       "input": "files",
       "accept": ".txt",
       "params": []
@@ -16,7 +16,7 @@
     {
       "id": "md_to_epub",
       "name": "Markdown → EPUB",
-      "description": "将 Markdown 打包为 EPUB 电子书，可设置封面、ISBN、出版社等元数据",
+      "description": "MD 打包 EPUB，支持封面与元数据",
       "input": "file",
       "accept": ".md,.markdown",
       "params": [
@@ -34,7 +34,7 @@
     {
       "id": "txt_to_epub",
       "name": "TXT → EPUB",
-      "description": "一站式转换：TXT 自动转 Markdown 再打包 EPUB，可设置元数据与封面",
+      "description": "TXT 一站式转 EPUB，含章节识别与元数据",
       "input": "file",
       "accept": ".txt",
       "params": [
@@ -50,7 +50,7 @@
     {
       "id": "epub_to_md",
       "name": "EPUB → Markdown",
-      "description": "反向转换：将 EPUB 电子书还原为 Markdown 文本，便于编辑再加工（支持批量转换）",
+      "description": "EPUB 还原为 Markdown 文本",
       "input": "files",
       "accept": ".epub",
       "params": []

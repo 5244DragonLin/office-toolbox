@@ -16,8 +16,10 @@
   .topbar { display: flex; align-items: center; gap: 12px; padding: 14px 28px; background: var(--card); border-bottom: 1px solid var(--border); }
   .topbar .logo { font-size: 18px; font-weight: 600; }
   .topbar .sub { font-size: 12px; color: var(--muted); }
-  .topbar .btn-back { margin-left: auto; display: none; padding: 6px 14px; border: 1px solid var(--border); border-radius: 8px; background: #fff; cursor: pointer; font-size: 13px; color: var(--text); }
+  .topbar .btn-back { display: none; padding: 6px 14px; border: 1px solid var(--border); border-radius: 8px; background: #fff; cursor: pointer; font-size: 13px; color: var(--text); }
   .topbar .btn-back:hover { background: var(--accent-bg); }
+  .topbar .btn-settings { margin-left: auto; padding: 6px 14px; border: 1px solid var(--border); border-radius: 8px; background: #fff; cursor: pointer; font-size: 13px; color: var(--text); }
+  .topbar .btn-settings:hover, .topbar .btn-settings.active { background: var(--accent-bg); border-color: var(--accent); color: var(--accent); }
 
   .view { max-width: 1080px; margin: 0 auto; padding: 28px; }
   .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px; }
@@ -32,7 +34,8 @@
   .tool-side { width: 240px; flex-shrink: 0; background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
   .tool-side .t-item { padding: 12px 16px; cursor: pointer; font-size: 14px; border-bottom: 1px solid var(--border); }
   .tool-side .t-item:hover { background: var(--accent-bg); }
-  .tool-side .t-item.active { background: var(--accent-bg); border-left: 3px solid var(--accent); font-weight: 600; }
+  .tool-side .t-item.active { background: var(--accent-bg); font-weight: 600; position: relative; }
+  .tool-side .t-item.active::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--accent); }
   .tool-side .t-item .t-desc { font-size: 12px; color: var(--muted); margin-top: 2px; font-weight: 400; }
   .tool-main { flex: 1; background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; }
   .tool-main h2 { font-size: 17px; margin-bottom: 6px; }
@@ -45,6 +48,8 @@
   .drop:hover, .drop.drag { border-color: var(--accent); background: var(--accent-bg); }
   .drop .file-list { margin-top: 10px; text-align: left; color: var(--text); }
   .drop .file-list div { font-size: 12px; padding: 2px 0; }
+  .f-remove { cursor: pointer; color: #c0392b; margin-left: 8px; font-weight: 600; user-select: none; }
+  .f-remove:hover { text-decoration: underline; }
   .btn { margin-top: 8px; padding: 10px 22px; background: var(--accent); color: #fff; border: none; border-radius: 8px; font-size: 14px; cursor: pointer; }
   .btn:disabled { opacity: .6; cursor: not-allowed; }
   .btn-mini { padding: 6px 12px; background: var(--accent-bg); color: var(--accent); border: 1px solid var(--accent); border-radius: 8px; font-size: 13px; cursor: pointer; }
@@ -68,7 +73,7 @@
   /* ===== 自定义确认弹窗 ===== */
   .modal-mask { position: fixed; inset: 0; background: rgba(15,23,42,.45); backdrop-filter: blur(3px); display: flex; align-items: center; justify-content: center; z-index: 999; opacity: 0; transition: opacity .18s; }
   .modal-mask.show { opacity: 1; }
-  .modal { width: 380px; max-width: calc(100vw - 40px); background: var(--card); border-radius: 14px; box-shadow: 0 18px 50px rgba(15,23,42,.28); padding: 26px 26px 20px; transform: scale(.92); transition: transform .18s; }
+  .modal { width: 380px; max-width: calc(100vw - 40px); background: var(--card); border-radius: 14px; box-shadow: 0 18px 50px rgba(15,23,42,.28); padding: 26px 26px 20px; transform: scale(.92); transition: transform .18s; user-select: text; }
   .modal-mask.show .modal { transform: scale(1); }
   .modal .m-icon { font-size: 34px; text-align: center; margin-bottom: 12px; }
   .modal .m-title { font-size: 16px; font-weight: 600; text-align: center; margin-bottom: 10px; }
@@ -78,6 +83,30 @@
   .modal .m-btn:hover { background: var(--accent-bg); }
   .modal .m-btn.primary { background: #e74c3c; border-color: #e74c3c; color: #fff; }
   .modal .m-btn.primary:hover { background: #d63a2a; }
+  /* ===== 执行进度弹窗 ===== */
+  #progressMask .pg-bar, #loginMask .pg-bar { height: 12px; background: var(--border); border-radius: 99px; overflow: hidden; margin: 16px 0 8px; }
+  #progressMask .pg-bar > div, #loginMask .pg-bar > div { height: 100%; width: 0%; background: linear-gradient(90deg, #2f6fed, #6f9bf3); border-radius: 99px; transition: width .4s; }
+  #progressMask .pg-meta, #loginMask .pg-meta { display: flex; justify-content: space-between; gap: 10px; font-size: 12px; color: var(--muted); }
+  /* ===== 设置页：依赖管理 ===== */
+  .set-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 16px; }
+  .set-head h2 { font-size: 17px; margin-bottom: 4px; }
+  .set-head .hint { font-size: 13px; color: var(--muted); line-height: 1.6; }
+  .dep-group { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px 20px; margin-bottom: 14px; }
+  .dep-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .dep-head .d-name { font-size: 15px; font-weight: 600; }
+  .dep-badge { font-size: 11px; padding: 2px 8px; border-radius: 99px; white-space: nowrap; }
+  .dep-badge.ok { background: #e9f6ec; color: #1f7a3d; }
+  .dep-badge.miss { background: #fdecec; color: #c0392b; }
+  .dep-desc { font-size: 12px; color: var(--muted); margin: 6px 0 4px; line-height: 1.6; }
+  .dep-table { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 8px; }
+  .dep-table td { padding: 7px 8px; border-top: 1px solid var(--border); vertical-align: middle; }
+  .dep-table tr:first-child td { border-top: none; }
+  .dep-table td.d-info { color: var(--muted); font-size: 12px; }
+  .dep-table td.d-op { text-align: right; white-space: nowrap; }
+  .dep-table td.d-op .btn-mini + .btn-mini { margin-left: 6px; }
+  .dep-actions { margin-top: 12px; }
+  #viewSettings.busy .dep-table button, #viewSettings.busy .dep-actions button { opacity: .45; pointer-events: none; }
+  .set-error { margin-bottom: 12px; padding: 10px 14px; background: #fdecec; color: #c0392b; border-radius: 8px; font-size: 13px; white-space: pre-line; }
   @media (max-width: 760px) { .tool-layout { flex-direction: column; } .tool-side { width: 100%; } }
 </style>
 </head>
@@ -85,6 +114,7 @@
 <div class="topbar">
   <span class="logo" id="logoHome" title="返回首页" style="cursor:pointer">🧰 office-toolbox</span>
   <span class="sub">个人办公工具箱 · 壳 + 插件，按需加载</span>
+  <button class="btn-settings" id="btnSettings" title="依赖管理">⚙️ 设置</button>
   <button class="btn-back" id="btnBack">← 返回首页</button>
 </div>
 
@@ -122,6 +152,46 @@
       <div class="check" id="tipLine"></div>
       <div class="result" id="resultBox"></div>
     </div>
+  </div>
+</div>
+
+<div class="view" id="viewSettings" style="display:none">
+  <div class="set-head">
+    <div>
+      <h2>⚙️ 依赖管理</h2>
+      <div class="hint">各插件的 Python 依赖与大组件（浏览器、AI 模型）安装状态。使用前先装，缺什么点什么；不再需要可卸载腾出空间。</div>
+    </div>
+    <button class="btn-mini" id="btnDepsRefresh">↻ 刷新</button>
+  </div>
+  <div id="settingsMsg"></div>
+  <div id="depsList"></div>
+</div>
+
+<div class="modal-mask" id="progressMask" style="display:none">
+  <div class="modal" role="dialog" aria-modal="true">
+    <div class="m-icon">⏳</div>
+    <div class="m-title" id="pgTitle">正在处理…</div>
+    <div class="pg-bar"><div id="pgBar"></div></div>
+    <div class="pg-meta"><span id="pgMsg">准备中…</span><span id="pgPct"></span></div>
+    <div class="check" style="margin-top:12px">任务正在后台执行，完成后此窗口自动关闭</div>
+  </div>
+</div>
+
+<div class="modal-mask" id="loginMask" style="display:none">
+  <div class="modal" role="dialog" aria-modal="true">
+    <div class="m-title" id="lgTitle">
+      <span>扫码登录</span>
+      <span onclick="closeLoginDialog()" style="cursor:pointer;font-size:22px;line-height:1;color:var(--muted);float:right;margin-left:16px" title="关闭">×</span>
+    </div>
+    <div style="display:flex; justify-content:center; margin: 14px 0 10px;">
+      <div id="lgQrBox" style="min-width:220px;min-height:220px;width:100%;display:flex;align-items:center;justify-content:center;background:var(--accent-bg);border-radius:10px;color:var(--muted);font-size:13px;text-align:center;padding:8px;white-space:pre-wrap;word-break:break-all">生成二维码…</div>
+    </div>
+    <div id="lgProgress" style="display:none;padding:0 4px">
+      <div class="pg-bar"><div id="lgBar"></div></div>
+      <div class="pg-meta"><span id="lgProgMsg">准备中…</span><span id="lgPct"></span></div>
+    </div>
+    <div class="m-msg" id="lgStatus">准备中…</div>
+    <div class="check" style="margin-top:10px">用对应 App 扫码并确认后，此窗口会自动完成登录并关闭</div>
   </div>
 </div>
 
@@ -251,6 +321,21 @@ drop.addEventListener('dragover', e => { e.preventDefault(); drop.classList.add(
 drop.addEventListener('dragleave', () => drop.classList.remove('drag'));
 drop.addEventListener('drop', e => { e.preventDefault(); drop.classList.remove('drag'); addFiles(e.dataTransfer.files); });
 
+function renderSelectedFiles() {
+  $('#fileList').innerHTML = selectedFiles.map((f, i) =>
+    `<div>📄 ${f.name}<span class="f-remove" data-i="${i}" title="移除该文件">✕ 删除</span></div>`).join('');
+  $('#dropText').textContent = selectedFiles.length ? `已选 ${selectedFiles.length} 个文件，继续点击可添加` : '点击或拖拽文件到此处';
+  updateAudioPreview();
+}
+
+// 点击 ✕ 移除单个已选文件（传错了不用整个重来）
+$('#fileList').addEventListener('click', e => {
+  const t = e.target.closest('.f-remove');
+  if (!t) return;
+  selectedFiles.splice(Number(t.dataset.i), 1);
+  renderSelectedFiles();
+});
+
 function addFiles(files) {
   const accept = (currentAction.accept || '').split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
   for (const f of files) {
@@ -261,9 +346,7 @@ function addFiles(files) {
     }
     selectedFiles.push(f);
   }
-  $('#fileList').innerHTML = selectedFiles.map(f => `<div>📄 ${f.name}</div>`).join('');
-  $('#dropText').textContent = selectedFiles.length ? `已选 ${selectedFiles.length} 个文件，继续点击可添加` : '点击或拖拽文件到此处';
-  updateAudioPreview();
+  renderSelectedFiles();
 }
 
 /* ============ 音频预览（插件 manifest 的 action 声明 "preview": "audio" 时启用） ============ */
@@ -374,8 +457,140 @@ document.addEventListener('keydown', e => {
   skipAudio(e.key === 'ArrowLeft' ? -1 : 1);
 }, true);
 
+/* ============ 执行进度弹窗（任务标识 + 轮询 /api/progress/{task_id}） ============ */
+let progressTimer = null, progressShowTimer = null;
+
+function startProgress(taskId) {
+  stopProgress();
+  $('#pgBar').style.width = '0%';
+  $('#pgPct').textContent = '';
+  $('#pgMsg').textContent = '准备中…';
+  // 700ms 内结束的快速任务不弹窗，避免闪烁
+  const mask = $('#progressMask');
+  progressShowTimer = setTimeout(() => {
+    mask.style.display = 'flex';
+    requestAnimationFrame(() => mask.classList.add('show'));
+  }, 700);
+  progressTimer = setInterval(async () => {
+    try {
+      const res = await fetch(`/api/progress/${taskId}`);
+      const data = await res.json();
+      if (data.progress) {
+        if (data.progress.percent != null) {
+          $('#pgBar').style.width = data.progress.percent + '%';
+          $('#pgPct').textContent = data.progress.percent + '%';
+        }
+        if (data.progress.message) $('#pgMsg').textContent = data.progress.message;
+      }
+    } catch (e) { /* 网络抖动忽略，下个周期重试 */ }
+  }, 600);
+}
+
+function stopProgress() {
+  if (progressShowTimer) { clearTimeout(progressShowTimer); progressShowTimer = null; }
+  if (progressTimer) { clearInterval(progressTimer); progressTimer = null; }
+  const mask = $('#progressMask');
+  mask.classList.remove('show');
+  setTimeout(() => { mask.style.display = 'none'; }, 180);
+}
+
+/* ============ 扫码登录弹窗（manifest 动作声明 ui:"login" 时启用） ============
+ * 壳契约：POST /api/login/{pid}/start 返回 {image: dataURL}，
+ * GET /api/login/{pid}/poll 返回 {status: waiting/scanned/confirmed/expired/refresh/error, message}
+ *   - refresh：后端检测到二维码临近过期且仍无人扫码，要求前端重新生成（与 expired 行为一致）；
+ *             已扫码状态不会返回 refresh，避免打断用户确认。 */
+let loginPollTimer = null, loginProgressTimer = null;
+
+function openLoginDialog() {
+  closeLoginDialog(true);   // 防止重复打开
+  const pid = current.id;
+  const mask = $('#loginMask');
+  const qrBox = mask.querySelector('#lgQrBox');
+  const statusEl = mask.querySelector('#lgStatus');
+  const setStatus = t => { statusEl.textContent = t; };
+  const reset = () => { qrBox.innerHTML = '生成二维码…'; qrBox.style.color = 'var(--muted)'; setStatus('准备中…'); };
+
+  // 登录准备进度（首次扫码需下载浏览器组件等）：start 请求阻塞期间轮询展示
+  const showProgress = p => {
+    const box = mask.querySelector('#lgProgress');
+    if (!p || !p.active) { box.style.display = 'none'; return; }
+    box.style.display = '';
+    if (p.percent != null) {
+      mask.querySelector('#lgBar').style.width = p.percent + '%';
+      mask.querySelector('#lgPct').textContent = p.percent + '%';
+    }
+    if (p.message) mask.querySelector('#lgProgMsg').textContent = p.message;
+  };
+  const stopProgressPoll = () => {
+    if (loginProgressTimer) { clearInterval(loginProgressTimer); loginProgressTimer = null; }
+    showProgress(null);
+  };
+  loginProgressTimer = setInterval(async () => {
+    try {
+      const res = await fetch(`/api/login/${pid}/progress`);
+      const d = await res.json();
+      showProgress(d.progress);
+    } catch (e) { /* 网络抖动忽略，下个周期重试 */ }
+  }, 700);
+
+  mask.style.display = 'flex';
+  requestAnimationFrame(() => mask.classList.add('show'));
+
+  const start = async () => {
+    reset();
+    try {
+      const res = await fetch(`/api/login/${pid}/start`, { method: 'POST' });
+      const d = await res.json();
+      stopProgressPoll();
+      if (!d.success || !d.image) { setStatus('❌ ' + (d.message || '生成二维码失败')); return false; }
+      qrBox.innerHTML = `<img src="${d.image}" style="width:200px;height:200px;image-rendering:pixelated" alt="二维码">`;
+      setStatus('请用 App 扫码');
+      loginPollTimer = setInterval(poll, 1500);
+      return true;
+    } catch (e) { stopProgressPoll(); setStatus('❌ 请求失败: ' + e.message); return false; }
+  };
+
+  const poll = async () => {
+    try {
+      const res = await fetch(`/api/login/${pid}/poll`);
+      const d = await res.json();
+      if (d.status === 'scanned') { setStatus('✅ 已扫码，请在手机上确认…'); return; }
+      if (d.status === 'confirmed') {
+        setStatus('🎉 ' + (d.message || '登录成功'));
+        clearInterval(loginPollTimer); loginPollTimer = null;
+        setTimeout(closeLoginDialog, 1600);
+        return;
+      }
+      if (d.status === 'expired' || d.status === 'refresh') {
+        setStatus(d.status === 'expired' ? '二维码已过期，正在刷新…' : '二维码即将过期，自动刷新中…');
+        stopPoll(); start(); return;
+      }
+      if (d.status === 'error') { setStatus('❌ ' + (d.message || '查询失败')); stopPoll(); }
+    } catch (e) { /* 网络抖动忽略，下个周期重试 */ }
+  };
+  const stopPoll = () => { if (loginPollTimer) { clearInterval(loginPollTimer); loginPollTimer = null; } };
+
+  // 遮罩点击 = 放弃本次扫码（后台会话在下次 start 时自动重建/过期自清）
+  // 改为只有点击右上角 × 关闭，防止选中文字时弹窗误关
+  mask.addEventListener('click', e => {
+    if (e.target === mask && e.button === 2) { stopPoll(); closeLoginDialog(); }
+  });
+  start();
+}
+
+function closeLoginDialog(instant = false) {
+  if (loginPollTimer) { clearInterval(loginPollTimer); loginPollTimer = null; }
+  if (loginProgressTimer) { clearInterval(loginProgressTimer); loginProgressTimer = null; }
+  const mask = $('#loginMask');
+  if (instant) { mask.style.display = 'none'; mask.classList.remove('show'); return; }
+  mask.classList.remove('show');
+  setTimeout(() => { mask.style.display = 'none'; }, 180);
+}
+
 $('#btnRun').addEventListener('click', async () => {
   const btn = $('#btnRun');
+  // 扫码登录类动作：不走通用执行流程，打开登录弹窗（二维码展示 + 自动轮询）
+  if (currentAction.ui === 'login') { openLoginDialog(); return; }
   if (currentAction.input !== 'text' && !selectedFiles.length) { alert('请先选择文件'); return; }
   for (const p of (currentAction.params || [])) {
     if (p.required) {
@@ -393,6 +608,11 @@ $('#btnRun').addEventListener('click', async () => {
     if (v !== '') params[p.name] = p.type === 'number' ? Number(v) : v;
   });
   fd.append('params', JSON.stringify(params));
+  // 任务标识：执行期间前端凭它轮询进度
+  const taskId = (crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}${Math.random()}`)
+    .replace(/[^0-9a-f]/g, '').padEnd(16, '0').slice(0, 16);
+  fd.append('task_id', taskId);
+  startProgress(taskId);
   try {
     const res = await fetch(`/api/plugins/${current.id}/run/${currentAction.id}`, { method: 'POST', body: fd });
     const data = await res.json();
@@ -401,6 +621,7 @@ $('#btnRun').addEventListener('click', async () => {
   } catch (e) {
     showError('请求失败: ' + e.message);
   } finally {
+    stopProgress();
     btn.disabled = false; btn.textContent = '开始转换';
   }
 });
@@ -410,12 +631,17 @@ async function downloadFiles(list) {
   for (const f of list) {
     try {
       const resp = await fetch(f.url);
+      if (!resp.ok) {  // 404 等错误响应的 JSON body 不能存成文件（否则出现打不开的"坏图片"）
+        console.error('下载失败(HTTP ' + resp.status + '):', f.name);
+        continue;
+      }
       const blob = await resp.blob();
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url; a.download = f.name;
       document.body.appendChild(a); a.click(); a.remove();
-      URL.revokeObjectURL(url);
+      // 延迟释放 blob 地址：点击瞬间就 revoke 会让浏览器下载中断（表现为"失败-未发现文件"）
+      setTimeout(() => URL.revokeObjectURL(url), 30_000);
     } catch (e) { console.error('下载失败:', f.name, e); }
   }
 }
@@ -536,6 +762,10 @@ function showConfirm({ icon = '⚠️', title = '提示', message = '', okText =
 }
 
 function goHome() {
+  // 设置页可能正开着，先复位其状态
+  settingsOpen = false;
+  $('#viewSettings').style.display = 'none';
+  $('#btnSettings').classList.remove('active');
   // 有未下载的转换结果：先提示，确认后删除本次任务全部文件再返回（对所有工具统一生效）
   if (pendingFiles.length) {
     const n = pendingFiles.length;
@@ -569,6 +799,189 @@ function goHome() {
 
 $('#btnBack').addEventListener('click', goHome);
 $('#logoHome').addEventListener('click', goHome);
+
+/* ============ 设置页：依赖管理（/api/deps + /api/setup/*） ============
+ * 数据由后端 deps.py 汇总（只读，不加载插件代码）；
+ * 安装/卸载走 /api/setup/*，后台线程执行，进度复用 /api/progress/{op_id} 轮询。 */
+let settingsOpen = false, settingsReturnView = 'home', setupBusy = false, setupTimer = null;
+let depsCache = [];
+
+const PKG_STATE_TEXT = { ok: '✓ 就绪', missing: '缺失', outdated: '版本不符' };
+const ASSET_STATE_TEXT = { ok: '✓ 已安装', partial: '部分安装', missing: '未安装' };
+
+function fmtSize(n) {
+  if (!n) return '';
+  if (n >= 1024 ** 3) return (n / 1024 ** 3).toFixed(2) + 'GB';
+  return (n / 1024 ** 2).toFixed(1) + 'MB';
+}
+
+async function openSettings() {
+  if (settingsOpen) { closeSettings(); return; }
+  settingsReturnView = ($('#viewTool').style.display !== 'none' && current) ? 'tool' : 'home';
+  settingsOpen = true;
+  $('#viewHome').style.display = 'none';
+  $('#viewTool').style.display = 'none';
+  $('#viewSettings').style.display = 'block';
+  $('#btnSettings').classList.add('active');
+  loadSettings();
+}
+
+function closeSettings() {
+  settingsOpen = false;
+  $('#viewSettings').style.display = 'none';
+  $('#btnSettings').classList.remove('active');
+  if (settingsReturnView === 'tool' && current) $('#viewTool').style.display = 'block';
+  else $('#viewHome').style.display = 'block';
+}
+
+async function loadSettings() {
+  const list = $('#depsList');
+  list.innerHTML = '<div class="empty">加载中…</div>';
+  try {
+    const res = await fetch('/api/deps');
+    const data = await res.json();
+    renderDeps(data.plugins || []);
+  } catch (e) {
+    list.innerHTML = `<div class="set-error">加载依赖状态失败：${e.message}</div>`;
+  }
+}
+
+function renderDeps(groups) {
+  depsCache = groups;
+  const list = $('#depsList');
+  if (!groups.length) { list.innerHTML = '<div class="empty">没有可展示的插件</div>'; return; }
+  list.innerHTML = groups.map(g => {
+    const badPkgs = (g.packages || []).filter(p => p.state !== 'ok');
+    const badge = badPkgs.length
+      ? `<span class="dep-badge miss">${badPkgs.length} 个依赖未就绪</span>`
+      : '<span class="dep-badge ok">依赖就绪</span>';
+    const pkgRows = (g.packages || []).map(p => {
+      const stateCls = p.state === 'ok' ? 'ok' : 'miss';
+      const info = p.state === 'ok' ? `已装 ${p.installed}`
+                 : p.state === 'missing' ? (p.spec ? `未安装（要求 ${p.spec}）` : '未安装')
+                 : `已装 ${p.installed}，要求 ${p.spec}`;
+      const ops = [];
+      if (p.state !== 'ok') ops.push(`<button class="btn-mini" onclick="installPkg('${g.id}','${p.name}')">${p.state === 'outdated' ? '升级' : '安装'}</button>`);
+      if (p.state !== 'missing') ops.push(`<button class="btn-mini" onclick="uninstallPkg('${g.id}','${p.name}')">卸载</button>`);
+      return `<tr>
+        <td class="d-item">${p.name} <span class="dep-badge ${stateCls}">${PKG_STATE_TEXT[p.state] || p.state}</span></td>
+        <td class="d-info">${info}</td>
+        <td class="d-op">${ops.join('')}</td>
+      </tr>`;
+    }).join('');
+    const assetRows = (g.assets || []).map(a => {
+      const stateCls = a.state === 'ok' ? 'ok' : 'miss';
+      const sizeText = (a.state === 'ok' || a.state === 'partial') ? fmtSize(a.size) : (a.size_hint || '');
+      const typeLabel = a.type === 'playwright' ? '浏览器组件' : a.type === 'modelscope' ? 'AI 模型' : (a.type || '组件');
+      const ops = [];
+      if (a.state !== 'ok') ops.push(`<button class="btn-mini" onclick="installAsset('${g.id}','${a.id}')">${a.state === 'partial' ? '续装' : '安装'}</button>`);
+      if (a.state !== 'missing') ops.push(`<button class="btn-mini" onclick="uninstallAsset('${g.id}','${a.id}')">卸载</button>`);
+      return `<tr>
+        <td class="d-item">${a.name || a.id} <span class="dep-badge ${stateCls}">${ASSET_STATE_TEXT[a.state] || a.state}</span></td>
+        <td class="d-info">${[typeLabel, a.description, sizeText ? '约 ' + sizeText : ''].filter(Boolean).join(' · ')}</td>
+        <td class="d-op">${ops.join('')}</td>
+      </tr>`;
+    }).join('');
+    const groupOp = badPkgs.length
+      ? `<div class="dep-actions"><button class="btn-mini" onclick="installAllPkgs('${g.id}')">⬇ 一键安装缺失依赖（${badPkgs.length}）</button></div>`
+      : '';
+    return `<div class="dep-group">
+      <div class="dep-head"><span>${g.icon || '🧰'}</span><span class="d-name">${g.name}</span>${badge}</div>
+      ${g.description ? `<div class="dep-desc">${g.description}</div>` : ''}
+      ${(pkgRows || assetRows) ? `<table class="dep-table">${pkgRows}${assetRows}</table>` : '<div class="dep-desc">无外部依赖</div>'}
+      ${groupOp}
+    </div>`;
+  }).join('');
+}
+
+function showSettingsError(msg) {
+  $('#settingsMsg').innerHTML = msg ? `<div class="set-error">❌ ${msg.replace(/</g, '&lt;')}</div>` : '';
+}
+
+function setSettingsBusy(b) { $('#viewSettings').classList.toggle('busy', b); }
+
+async function runSetup(url, body, title) {
+  if (setupBusy) { alert('已有安装/卸载操作进行中，请等它完成'); return; }
+  setupBusy = true; setSettingsBusy(true);
+  showSettingsError('');
+  let d;
+  try {
+    const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+    d = await res.json();
+  } catch (e) {
+    alert('请求失败: ' + e.message); setupBusy = false; setSettingsBusy(false); return;
+  }
+  if (!d.success) { alert(d.error || '操作启动失败'); setupBusy = false; setSettingsBusy(false); return; }
+  // 复用执行进度弹窗展示安装/卸载进度
+  $('#pgTitle').textContent = title;
+  $('#pgBar').style.width = '0%'; $('#pgPct').textContent = ''; $('#pgMsg').textContent = '准备中…';
+  const mask = $('#progressMask');
+  mask.style.display = 'flex';
+  requestAnimationFrame(() => mask.classList.add('show'));
+  setupTimer = setInterval(async () => {
+    try {
+      const r = await fetch(`/api/progress/${d.op_id}`);
+      const data = await r.json();
+      const p = data.progress;
+      if (!p) return;
+      if (p.percent != null) { $('#pgBar').style.width = p.percent + '%'; $('#pgPct').textContent = p.percent + '%'; }
+      if (p.message) $('#pgMsg').textContent = p.message;
+      if (p.done) {
+        clearInterval(setupTimer); setupTimer = null;
+        setTimeout(() => {
+          mask.classList.remove('show');
+          setTimeout(() => { mask.style.display = 'none'; }, 180);
+          setupBusy = false; setSettingsBusy(false);
+          if (p.error) showSettingsError('操作失败：' + p.error);
+          loadSettings();   // 成功失败都刷新状态
+        }, 500);
+      }
+    } catch (e) { /* 网络抖动忽略，下个周期重试 */ }
+  }, 600);
+}
+
+function findAssetName(pid, assetId) {
+  for (const g of depsCache) {
+    if (g.id !== pid) continue;
+    const a = (g.assets || []).find(x => x.id === assetId);
+    if (a) return a.name || assetId;
+  }
+  return assetId;
+}
+
+async function installPkg(pid, name) {
+  await runSetup('/api/setup/pip-install', { pid, names: [name] }, `安装 ${name}`);
+}
+
+async function installAllPkgs(pid) {
+  await runSetup('/api/setup/pip-install', { pid }, '安装缺失依赖');
+}
+
+async function uninstallPkg(pid, name) {
+  const ok = await showConfirm({
+    icon: '🗑️', title: '卸载 Python 包',
+    message: `确定卸载 ${name} 吗？\n其他插件若也依赖它将受影响（下次使用时会自动重装）。`,
+    okText: '卸载',
+  });
+  if (ok) await runSetup('/api/setup/pip-uninstall', { pid, names: [name] }, `卸载 ${name}`);
+}
+
+async function installAsset(pid, assetId) {
+  await runSetup('/api/setup/asset-install', { pid, asset_id: assetId }, `下载 ${findAssetName(pid, assetId)}`);
+}
+
+async function uninstallAsset(pid, assetId) {
+  const name = findAssetName(pid, assetId);
+  const ok = await showConfirm({
+    icon: '🗑️', title: '移除组件',
+    message: `确定移除 ${name} 吗？\n将释放对应磁盘空间，下次使用需重新下载。`,
+    okText: '移除',
+  });
+  if (ok) await runSetup('/api/setup/asset-uninstall', { pid, asset_id: assetId }, `移除 ${name}`);
+}
+
+$('#btnSettings').addEventListener('click', openSettings);
+$('#btnDepsRefresh').addEventListener('click', loadSettings);
 
 load();
 </script>

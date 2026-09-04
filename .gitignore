@@ -22,6 +22,14 @@ config.local.yaml
 .env
 *.secret
 
+# 抖音插件登录态 Cookie（含个人账号信息，禁止提交；见 cookies.example.txt）
+# cookies*.txt 覆盖 cookies.txt 及网盘同步产生的 cookies_冲突文件_*.txt
+plugins/douyin_download/cookies*.txt
+!plugins/douyin_download/cookies.example.txt
+
+# B站插件扫码登录中间状态（含 qrcode_key，禁止提交）
+plugins/bilibili_download/login_state.json
+
 # 输出目录（运行产物）
 output/
 results/

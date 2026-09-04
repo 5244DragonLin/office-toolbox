@@ -1,0 +1,252 @@
+{
+  "id": "bilibili_download",
+  "name": "B站下载",
+  "version": "0.7.0",
+  "description": "下载 B站视频/收藏夹/合集/UP主投稿，提取音频与字幕，支持扫码登录，实时下载进度",
+  "icon": "📺",
+  "actions": [
+    {
+      "id": "login_qrcode",
+      "name": "扫码登录B站",
+      "ui": "login",
+      "description": "B站 App 扫码登录（弹窗，扫码即用）",
+      "input": "text",
+      "params": []
+    },
+    {
+      "id": "login_logout",
+      "name": "退出登录",
+      "description": "清除B站登录凭证",
+      "input": "text",
+      "params": []
+    },
+    {
+      "id": "download_video",
+      "name": "下载视频",
+      "description": "下载单个 B站视频",
+      "input": "text",
+      "params": [
+        {
+          "name": "link",
+          "label": "B站视频链接",
+          "type": "text",
+          "required": true,
+          "placeholder": "https://www.bilibili.com/video/BVxxxxxxxxxx/",
+          "hint": "支持 BV 号链接、av 号链接、b23.tv 短链接；收藏夹/合集/UP主空间等批量链接请使用对应批量功能"
+        },
+        {
+          "name": "quality",
+          "label": "画质",
+          "type": "select",
+          "default": "best",
+          "options": [
+            {
+              "value": "best",
+              "label": "最高画质"
+            },
+            {
+              "value": "4k",
+              "label": "4K"
+            },
+            {
+              "value": "1080p",
+              "label": "1080p"
+            },
+            {
+              "value": "720p",
+              "label": "720p"
+            },
+            {
+              "value": "480p",
+              "label": "480p"
+            }
+          ],
+          "hint": "未登录最高 480P；扫码登录后按账号解锁 1080P/4K"
+        }
+      ]
+    },
+    {
+      "id": "download_favlist",
+      "name": "下载收藏夹",
+      "description": "批量下载整个收藏夹视频",
+      "input": "text",
+      "params": [
+        {
+          "name": "link",
+          "label": "收藏夹链接",
+          "type": "text",
+          "required": true,
+          "placeholder": "https://space.bilibili.com/261417564/favlist?fid=3233073764",
+          "hint": "支持单收藏夹（带 fid）和「全部收藏夹」（不带 fid）链接；私密收藏夹需先扫码登录"
+        },
+        {
+          "name": "quality",
+          "label": "画质",
+          "type": "select",
+          "default": "best",
+          "options": [
+            {
+              "value": "best",
+              "label": "最高画质"
+            },
+            {
+              "value": "4k",
+              "label": "4K"
+            },
+            {
+              "value": "1080p",
+              "label": "1080p"
+            },
+            {
+              "value": "720p",
+              "label": "720p"
+            },
+            {
+              "value": "480p",
+              "label": "480p"
+            }
+          ],
+          "hint": "未登录最高 480P；扫码登录后按账号解锁 1080P/4K"
+        }
+      ]
+    },
+    {
+      "id": "download_collection",
+      "name": "下载合集/系列",
+      "description": "批量下载合集/系列视频",
+      "input": "text",
+      "params": [
+        {
+          "name": "link",
+          "label": "合集/列表链接",
+          "type": "text",
+          "required": true,
+          "placeholder": "https://space.bilibili.com/261417564/lists/12345?type=season",
+          "hint": "支持合集（type=season）、系列（type=series）、播放列表（www.bilibili.com/list/xx?sid=xx）"
+        },
+        {
+          "name": "quality",
+          "label": "画质",
+          "type": "select",
+          "default": "best",
+          "options": [
+            {
+              "value": "best",
+              "label": "最高画质"
+            },
+            {
+              "value": "4k",
+              "label": "4K"
+            },
+            {
+              "value": "1080p",
+              "label": "1080p"
+            },
+            {
+              "value": "720p",
+              "label": "720p"
+            },
+            {
+              "value": "480p",
+              "label": "480p"
+            }
+          ],
+          "hint": "未登录最高 480P；扫码登录后按账号解锁 1080P/4K"
+        }
+      ]
+    },
+    {
+      "id": "download_space",
+      "name": "下载UP主全部投稿",
+      "description": "批量下载 UP主全部投稿视频",
+      "input": "text",
+      "params": [
+        {
+          "name": "link",
+          "label": "UP主空间链接",
+          "type": "text",
+          "required": true,
+          "placeholder": "https://space.bilibili.com/261417564",
+          "hint": "将下载该 UP主全部投稿视频，投稿量大时耗时较长，请耐心等待"
+        },
+        {
+          "name": "quality",
+          "label": "画质",
+          "type": "select",
+          "default": "best",
+          "options": [
+            {
+              "value": "best",
+              "label": "最高画质"
+            },
+            {
+              "value": "4k",
+              "label": "4K"
+            },
+            {
+              "value": "1080p",
+              "label": "1080p"
+            },
+            {
+              "value": "720p",
+              "label": "720p"
+            },
+            {
+              "value": "480p",
+              "label": "480p"
+            }
+          ],
+          "hint": "强烈建议先扫码登录：投稿列表接口风控较严，未登录易被拦截；登录后还可解锁更高画质"
+        }
+      ]
+    },
+    {
+      "id": "download_audio",
+      "name": "下载音频",
+      "description": "提取 B站视频音频",
+      "input": "text",
+      "params": [
+        {
+          "name": "link",
+          "label": "B站视频链接",
+          "type": "text",
+          "required": true,
+          "placeholder": "https://www.bilibili.com/video/BVxxxxxxxxxx/",
+          "hint": "支持 BV 号链接"
+        },
+        {
+          "name": "format",
+          "label": "音频格式",
+          "type": "select",
+          "default": "mp3",
+          "options": [
+            {
+              "value": "mp3",
+              "label": "mp3（192k 转码）"
+            },
+            {
+              "value": "m4a",
+              "label": "m4a（无损拷贝）"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "get_subtitle",
+      "name": "获取字幕/文案",
+      "description": "提取 CC 字幕（SRT 格式）",
+      "input": "text",
+      "params": [
+        {
+          "name": "link",
+          "label": "B站视频链接",
+          "type": "text",
+          "required": true,
+          "placeholder": "https://www.bilibili.com/video/BVxxxxxxxxxx/",
+          "hint": "B站字幕接口需要登录态：请先扫码登录，否则基本拿不到字幕"
+        }
+      ]
+    }
+  ]
+}

@@ -2,13 +2,13 @@
   "id": "md_to_word",
   "name": "MD转公文Word",
   "version": "0.1.0",
-  "description": "Markdown 转符合中文公文排版规范的 Word 文档（宋体/黑体/楷体多级标题、三线表、公文序号）",
+  "description": "MD 转中文公文排版 Word（宋/黑/楷多级标题、三线表）",
   "icon": "📄",
   "actions": [
     {
       "id": "md_to_docx",
       "name": "Markdown → Word",
-      "description": "按公文格式排版：多级标题字体（宋体/黑体/楷体/仿宋）、28pt 固定行距、三线表、自动匹配中文公文序号",
+      "description": "MD 转公文排版 Word（宋/黑/楷多级标题、三线表）",
       "input": "file",
       "accept": ".md,.markdown",
       "params": []

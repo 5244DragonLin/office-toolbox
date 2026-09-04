@@ -9,3 +9,11 @@
 # 说明：requests / curl_cffi 本项目未使用，已移除。
 gmssl>=3.2.2
 imageio-ffmpeg>=0.5
+# WhisperX 语音转文字（faster-whisper ASR，纯文字输出，无对齐/无说话人分离）
+# 安装时会一并拉入 torch / torchaudio 等较重依赖，体积较大，属正常现象。
+whisperx>=3.1.0
+# ASR 模型优先从 ModelScope（魔搭）下载；未安装时自动回退 Hugging Face。
+modelscope>=1.9.0
+# modelscope 1.39 在 import 时用到 packaging 但没声明依赖，缺失会导致
+# import modelscope 直接失败（表现为静默回退到较慢的 Hugging Face 下载）。
+packaging>=24.0
