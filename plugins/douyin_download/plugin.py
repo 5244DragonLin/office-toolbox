@@ -8,7 +8,6 @@ if str(SCRIPT_DIR) not in sys.path:
 
 from douyin_fetch import extract_audio, extract_aweme_id, download_aweme  # noqa: E402
 from douyin_login import login_start, login_poll, login_logout  # noqa: E402
-from whisperx_transcribe import transcribe_audio  # noqa: E402
 
 # 扫码登录契约：壳的 /api/login/{pid}/start|poll 路由会调用这两个函数，
 # 前端弹窗展示二维码并轮询状态；logout 仍走普通动作返回提示文件。
@@ -59,7 +58,21 @@ def act_transcribe(files, params, workdir: Path):
 
     管线：download_aweme(mode=audio) 取音轨 → whisperx 转写 → 输出 txt（纯文字）。
     中间的音频是「过路」临时文件，随任务结束被壳自动清理。
+
+    转写依赖（whisperx / modelscope，连带 torch，体积数 GB）放在
+    requirements-transcribe.txt 可选组里、在此函数内才 import：只想下载
+    视频/音频的用户永远不必安装它们（按需加载——重依赖只属于真正用到
+    它的那个动作）。
     """
+    try:
+        from whisperx_transcribe import transcribe_audio  # noqa: E402
+    except ImportError as exc:
+        raise RuntimeError(
+            "「视频转文字」的依赖尚未安装（whisperx / modelscope，连带 torch，体积较大）。\n"
+            "请在网页右上角「⚙️ 设置」的本插件依赖列表中安装，\n"
+            "或手动执行：pip install -r plugins/douyin_download/requirements-transcribe.txt"
+        ) from exc
+
     link = _require_link(params)
     cookie = (params.get("cookie") or "").strip()
     model_size = (params.get("model_size") or "small").strip()
@@ -83,27 +96,9 @@ def act_transcribe(files, params, workdir: Path):
     )
 
 
-def act_transcribe_file(files, params, workdir: Path):
-    """上传本地音视频 → 转写为文字（复用同一套 WhisperX 管线）。"""
-    uploaded = (files or {}).get("files", [])
-    if not uploaded:
-        raise ValueError("请先选择要转写的音视频文件")
-    audio_path = Path(uploaded[0])
-    model_size = (params.get("model_size") or "small").strip()
-    language = (params.get("language") or "").strip() or None
-    progress = params.get("_progress")
-
-    return transcribe_audio(
-        audio_path, workdir,
-        model_size=model_size, language=language,
-        progress=progress,
-    )
-
-
 ACTIONS = {
     "login_logout": act_login_logout,
     "download_video": act_download_video,
     "download_audio": act_download_audio,
     "transcribe": act_transcribe,
-    "transcribe_file": act_transcribe_file,
 }

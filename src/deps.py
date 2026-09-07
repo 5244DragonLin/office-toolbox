@@ -19,7 +19,6 @@ import re
 import subprocess
 import sys
 import threading
-import time
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
@@ -96,25 +95,39 @@ def _plugin_deps(manifest: dict) -> dict:
         "description": manifest.get("description", ""),
         "packages": pkgs,
         "assets": asset_status(manifest),
-        "deps_ready": all(p["state"] == "ok" for p in pkgs),
+        # 可选组（requirements-*.txt）不计入「未就绪」：它们只服务个别重依赖
+        # 动作，缺着不该让整个插件看起来像坏的
+        "deps_ready": all(p["state"] == "ok" for p in pkgs if not p["optional"]),
     }
 
 
-def _req_file(pid: str) -> Path:
+def _req_files(pid: str) -> list[tuple[Path, bool]]:
+    """返回 (requirements 文件, 是否可选组)。
+
+    requirements.txt 是必选组（插件一用就要）；requirements-*.txt 是可选组
+    （只服务插件的个别重依赖动作，如转写用的 whisperx/torch，不该让所有用户
+    被动安装）。壳的自动安装与「一键安装缺失依赖」只针对必选组；可选组在
+    设置页逐包安装/卸载，与必选组同样可见可管理。
+    """
     if pid == SHELL_ID:
-        return PROJECT_ROOT / "requirements.txt"
-    return PROJECT_ROOT / "plugins" / pid / "requirements.txt"
-
-
-def _requirement_lines(pid: str) -> list[str]:
-    f = _req_file(pid)
-    if not f.exists():
-        return []
+        return [(PROJECT_ROOT / "requirements.txt", False)]
+    base = PROJECT_ROOT / "plugins" / pid / "requirements.txt"
     out = []
-    for raw in f.read_text(encoding="utf-8").splitlines():
-        line = raw.split("#", 1)[0].strip()
-        if line:
-            out.append(line)
+    if base.exists():
+        out.append((base, False))
+    for f in sorted(base.parent.glob("requirements-*.txt")):
+        out.append((f, True))
+    return out
+
+
+def _requirement_lines(pid: str) -> list[tuple[str, bool]]:
+    """汇总全部 requirements 行，返回 (行, 是否可选) 列表。"""
+    out: list[tuple[str, bool]] = []
+    for f, optional in _req_files(pid):
+        for raw in f.read_text(encoding="utf-8").splitlines():
+            line = raw.split("#", 1)[0].strip()
+            if line:
+                out.append((line, optional))
     return out
 
 
@@ -152,11 +165,12 @@ def _satisfies(spec: str, version: str) -> bool:
 
 def pip_status(pid: str) -> list[dict]:
     rows = []
-    for line in _requirement_lines(pid):
+    for line, optional in _requirement_lines(pid):
         name, spec = _parse_req(line)
         ver = _installed_version(name)
         state = "missing" if ver is None else ("outdated" if not _satisfies(spec, ver) else "ok")
-        rows.append({"name": name, "spec": spec, "installed": ver, "state": state})
+        rows.append({"name": name, "spec": spec, "installed": ver,
+                     "state": state, "optional": optional})
     return rows
 
 
@@ -187,7 +201,9 @@ def asset_status(manifest: dict) -> list[dict]:
     rows = []
     for a in manifest.get("assets") or []:
         row = {"id": a.get("id", ""), "type": a.get("type", ""), "name": a.get("name", ""),
-               "description": a.get("description", ""), "size_hint": a.get("size_hint", ""),
+               "description": a.get("description", ""),
+               # hint 归一化：去掉 manifest 里自带的「约」字，由前端统一前缀，避免出现「约 约 75MB」
+               "size_hint": re.sub(r"^\s*约\s*", "", a.get("size_hint", "")),
                "state": "missing", "size": 0}
         try:
             if a.get("type") == "playwright":
@@ -211,21 +227,22 @@ def asset_status(manifest: dict) -> list[dict]:
 # 安装 / 卸载（阻塞，进度经回调上报）
 # ---------------------------------------------------------------------------
 def pip_install_op(pid: str, names: list[str] | None, progress=None) -> None:
-    """安装插件依赖。names=None 装全部；否则只装指定包（始终传 requirements 原始行，
-    保留版本约束）。逐包安装是为了把进度粒度做到「第几个包」。"""
-    reqs: dict[str, str] = {}
-    for line in _requirement_lines(pid):
+    """安装插件依赖。names=None 装全部必选包（可选组不被动安装）；否则只装指定包
+    （可选组也可按名安装）。始终传 requirements 原始行，保留版本约束。
+    逐包安装是为了把进度粒度做到「第几个包」。"""
+    reqs: dict[str, tuple[str, bool]] = {}
+    for line, optional in _requirement_lines(pid):
         n, _ = _parse_req(line)
-        reqs[n.lower().replace("-", "_")] = line
+        reqs[n.lower().replace("-", "_")] = (line, optional)
     if names:
         picks = []
         for n in names:
             key = n.lower().replace("-", "_")
             if key not in reqs:
                 raise ValueError(f"requirements.txt 中没有 {n}")
-            picks.append(reqs[key])
+            picks.append(reqs[key][0])
     else:
-        picks = list(reqs.values())
+        picks = [line for line, optional in reqs.values() if not optional]
     if not picks:
         return
     total = len(picks)
@@ -236,6 +253,11 @@ def pip_install_op(pid: str, names: list[str] | None, progress=None) -> None:
         _pip_install_one(line, name, i, total, progress)
     if progress:
         progress(percent=100, message="依赖安装完成")
+
+
+# pip 安装日志只透出关键节点（开始下载 / 开始安装 / 完成 / 出错），
+# 其余（索引地址、缓存命中、依赖解析等）没有信息量，只会把进度弹窗刷屏
+_KEY_LOG_RE = re.compile(r"(Downloading|Installing collected|Successfully installed|ERROR|error:)", re.I)
 
 
 def _pip_install_one(req_line: str, name: str, i: int, total: int, progress) -> None:
@@ -250,8 +272,8 @@ def _pip_install_one(req_line: str, name: str, i: int, total: int, progress) -> 
         if not line:
             continue
         lines.append(line)
-        if progress:
-            progress(message=f"安装 {name}（{i}/{total}）：{line[:120]}")
+        if _KEY_LOG_RE.search(line) and progress:
+            progress(message=f"安装 {name}（{i}/{total}）：{line[:80]}")
     code = proc.wait()
     if code != 0:
         # 把 pip 输出末尾带回给前端：失败原因（网络/版本冲突/找不到包等）
@@ -317,7 +339,12 @@ def _iter_proc_lines(stream):
 
 
 def _pw_install_target(target: str, progress=None) -> None:
-    """下载 playwright 浏览器组件，流式解析 CLI 进度条输出上报百分比。"""
+    """下载 playwright 浏览器组件，流式解析 CLI 进度条输出上报百分比。
+
+    超时用 threading.Timer 看门狗而不是在输出循环里检查时间：输出是
+    stream.read(1) 阻塞读的，进程僵死且不再产生任何输出时循环内的
+    deadline 检查永远不会执行到——看门狗在独立线程里到点即 kill，
+    读循环随 EOF 退出。"""
     env = os.environ.copy()
     env.setdefault("PLAYWRIGHT_DOWNLOAD_HOST", _PW_MIRROR)
     if progress:
@@ -329,24 +356,33 @@ def _pw_install_target(target: str, progress=None) -> None:
     )
     tail: list[str] = []
     component = target
-    deadline = time.time() + 1800  # 兜底：镜像异常导致下载僵死时不再无限等
-    for line in _iter_proc_lines(proc.stdout):
-        nm = _PW_NAME_RE.search(line)
-        if nm:
-            component = nm.group(1).strip()
-        pm = _PW_PCT_RE.search(line)
-        if pm and progress:
-            try:
-                pct = float(pm.group(1))
-            except ValueError:
-                pct = -1
-            if 0 <= pct <= 100:
-                progress(percent=int(pct), message=f"正在下载浏览器组件 {component}…")
-        tail = (tail + [line])[-5:]
-        if time.time() > deadline:
-            proc.kill()
-            raise RuntimeError("浏览器组件下载超时（30 分钟），请检查网络后重试")
-    code = proc.wait(timeout=60)
+    timed_out = threading.Event()
+
+    def _kill():
+        timed_out.set()
+        proc.kill()
+
+    watchdog = threading.Timer(1800, _kill)  # 兜底：镜像异常导致下载僵死时不再无限等
+    watchdog.start()
+    try:
+        for line in _iter_proc_lines(proc.stdout):
+            nm = _PW_NAME_RE.search(line)
+            if nm:
+                component = nm.group(1).strip()
+            pm = _PW_PCT_RE.search(line)
+            if pm and progress:
+                try:
+                    pct = float(pm.group(1))
+                except ValueError:
+                    pct = -1
+                if 0 <= pct <= 100:
+                    progress(percent=int(pct), message=f"正在下载浏览器组件 {component}…")
+            tail = (tail + [line])[-5:]
+        code = proc.wait(timeout=60)
+    finally:
+        watchdog.cancel()
+    if timed_out.is_set():
+        raise RuntimeError("浏览器组件下载超时（30 分钟），请检查网络后重试")
     if code != 0:
         raise RuntimeError(f"浏览器组件安装失败（exit {code}）：" + " | ".join(tail))
 
@@ -438,10 +474,8 @@ def asset_install_op(manifest: dict, asset_id: str, progress=None) -> None:
         raise ValueError(f"未知组件类型: {a.get('type')}")
 
 
-def asset_uninstall_op(manifest: dict, asset_id: str, progress=None) -> None:
-    a = _find_asset(manifest, asset_id)
-    if progress:
-        progress(message=f"移除 {a.get('name') or asset_id}…")
+def _asset_uninstall_core(a: dict) -> None:
+    """按组件描述卸载（不含进度与 100% 收尾，供单组件/一键卸载复用）。"""
     if a.get("type") == "playwright":
         for target in a.get("targets") or ["chromium"]:
             for d in _pw_target_dirs(target):
@@ -452,5 +486,52 @@ def asset_uninstall_op(manifest: dict, asset_id: str, progress=None) -> None:
             hard_rmtree(d)
     else:
         raise ValueError(f"未知组件类型: {a.get('type')}")
+
+
+def asset_uninstall_op(manifest: dict, asset_id: str, progress=None) -> None:
+    a = _find_asset(manifest, asset_id)
+    if progress:
+        progress(message=f"移除 {a.get('name') or asset_id}…")
+    _asset_uninstall_core(a)
     if progress:
         progress(percent=100, message="已移除")
+
+
+def uninstall_all_op(group: dict, progress=None) -> None:
+    """一键卸载某插件（或壳）已安装的全部依赖：先 pip 包，后大组件。
+
+    group 为 deps_overview 里该插件的汇总（packages + assets 带当前 state）。
+    只删已装项；缺失项直接跳过。逐组件推进度，失败即中断（剩余项重试可续）。
+    """
+    pkgs = [p["name"] for p in group.get("packages") or []
+            if p.get("state") != "missing" and p.get("installed")]
+    assets = [a for a in group.get("assets") or [] if a.get("state") != "missing"]
+    total = len(pkgs) + len(assets)
+    if not total:
+        if progress:
+            progress(percent=100, message="没有已安装的依赖，无需卸载")
+        return
+    done = 0
+    if pkgs:
+        if progress:
+            progress(percent=0, message=f"卸载 Python 包（{len(pkgs)} 个）：{', '.join(pkgs)}…")
+        proc = subprocess.run(
+            [sys.executable, "-m", "pip", "uninstall", "-y", *pkgs],
+            capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=600,
+        )
+        if proc.returncode != 0:
+            tail = (proc.stderr or proc.stdout or "").strip().splitlines()[-3:]
+            raise RuntimeError("pip 卸载失败：" + " | ".join(tail))
+        done += 1
+        if progress:
+            progress(percent=round(done / total * 100))
+    for a in assets:
+        name = a.get("name") or a.get("id")
+        if progress:
+            progress(percent=round(done / total * 100), message=f"移除 {name}…")
+        _asset_uninstall_core(a)
+        done += 1
+        if progress:
+            progress(percent=round(done / total * 100))
+    if progress:
+        progress(percent=100, message="已全部卸载")

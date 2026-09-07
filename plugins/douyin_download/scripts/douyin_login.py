@@ -189,6 +189,9 @@ def _auto_install_browser(progress=None):
         if buf.strip():
             yield buf.strip()
 
+    # 注意：进度解析逻辑与壳的 src/deps.py _pw_install_target 是同一套
+    # （设置页装浏览器组件 / 扫码前自动装各有一份）。二者分属壳与插件两侧、
+    # 按设计互不 import，改动时请两处同步。
     def _install(target: str):
         print(f"[douyin_login] 正在下载 Playwright 浏览器组件 {target}（约 100~300MB，仅首次）…",
               flush=True)
@@ -201,24 +204,35 @@ def _auto_install_browser(progress=None):
         )
         tail: list[str] = []
         component = target
-        deadline = time.time() + 900  # 兜底：镜像异常导致下载僵死时不再无限等
-        for line in _iter_lines(proc.stdout):
-            nm = _name_re.search(line)
-            if nm:
-                component = nm.group(1).strip()
-            pm = _pct_re.search(line)
-            if pm:
-                try:
-                    pct = float(pm.group(1))
-                except ValueError:
-                    pct = -1
-                if 0 <= pct <= 100 and progress:
-                    progress(percent=int(pct), message=f"正在下载浏览器组件 {component}…")
-            tail = (tail + [line])[-5:]
-            if time.time() > deadline:
-                proc.kill()
-                raise RuntimeError("浏览器组件下载超时（15 分钟），请检查网络后重试")
-        code = proc.wait(timeout=60)
+        # 超时用 threading.Timer 看门狗而不是在输出循环里检查时间：输出是
+        # read(1) 阻塞读的，进程僵死且无输出时循环内的 deadline 永远轮不到。
+        timed_out = threading.Event()
+
+        def _kill():
+            timed_out.set()
+            proc.kill()
+
+        watchdog = threading.Timer(900, _kill)  # 兜底：镜像异常导致下载僵死时不再无限等
+        watchdog.start()
+        try:
+            for line in _iter_lines(proc.stdout):
+                nm = _name_re.search(line)
+                if nm:
+                    component = nm.group(1).strip()
+                pm = _pct_re.search(line)
+                if pm:
+                    try:
+                        pct = float(pm.group(1))
+                    except ValueError:
+                        pct = -1
+                    if 0 <= pct <= 100 and progress:
+                        progress(percent=int(pct), message=f"正在下载浏览器组件 {component}…")
+                tail = (tail + [line])[-5:]
+            code = proc.wait(timeout=60)
+        finally:
+            watchdog.cancel()
+        if timed_out.is_set():
+            raise RuntimeError("浏览器组件下载超时（15 分钟），请检查网络后重试")
         if code != 0:
             raise subprocess.CalledProcessError(code, proc.args, output="\n".join(tail))
 

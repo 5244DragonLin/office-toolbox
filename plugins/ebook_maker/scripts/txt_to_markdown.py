@@ -32,6 +32,8 @@ import sys
 import argparse
 from pathlib import Path
 
+from cn_num import chinese_to_arabic as chinese_num_to_int  # 中文数字转换（与同目录其他脚本共享）
+
 
 # ============================================================
 # 章节识别规则
@@ -188,16 +190,13 @@ def convert_txt_to_md(input_path, output_path, dry_run=False, verbose=False):
             line_num += 1
 
     # 3. 逐行处理正文
-    prev_blank = False  # 上一行是否是空行（用于控制段落分段）
-
     while line_num < len(lines):
         raw_line = lines[line_num]
         stripped = raw_line.strip()
         line_num += 1
 
-        # 空行：跳过，但标记为需要分段
+        # 空行：跳过（v1.3 起每行独立成段，空行不再承担分段职责）
         if not stripped:
-            prev_blank = True
             continue
 
         # 检查是否为章节标题
@@ -209,24 +208,13 @@ def convert_txt_to_md(input_path, output_path, dry_run=False, verbose=False):
             md_lines.append(f"\n{'#' * level} {stripped}\n\n")
             if verbose:
                 print(f"[CHAPTER] L{line_num}: {'#' * level} {stripped}  ({rule_desc})")
-            prev_blank = False
         else:
-            # 普通正文段落
-            # 如果上一行是空行（新段落开始），直接添加内容
-            # 否则（同一段落内）需要判断：txt中同一段落可能跨多行
-            # 保守策略：只在明确空行分隔时才分段
-            if prev_blank and md_lines and not md_lines[-1].endswith('\n\n'):
-                # 上一个段落已结束（有空行间隔），当前行是新段落
-                # 确保上一个段落末尾有 \n\n
-                if md_lines[-1].endswith('\n'):
-                    # 再加一个 \n 变成 \n\n
-                    if not md_lines[-1].endswith('\n\n'):
-                        md_lines.append('\n')
-                md_lines.append(f"{stripped}\n\n")
-            else:
-                # 同一段落内，或文件开头
-                md_lines.append(f"{stripped}\n\n")
-            prev_blank = False
+            # 普通正文：每一行都作为独立段落输出（v1.3 起的既定取舍）。
+            # 网文 TXT 几乎都是「一段一行」且段落间常无空行，若按「有空行才分段、
+            # 无空行合并折行」处理，会把整章并成一坨；代价是软换行的老式 TXT
+            #（一个自然段被固定宽度排版折成多行、行间无空行）会按行拆段——
+            # 存法一是更安全的默认值。
+            md_lines.append(f"{stripped}\n\n")
 
     # 4. 写入文件或预览
     md_content = ''.join(md_lines)
@@ -394,7 +382,7 @@ def extract_chapter_number(title):
     if m:
         return int(m.group(1))
 
-    # 第X章 / 第X节（中文数字）
+    # 第X章 / 第X节（中文数字）—— 转换逻辑统一在 cn_num（与其他脚本共享）
     m = re.search(r'第\s*([零一二两三四五六七八九十百千万]+)\s*[章章节]', title)
     if m:
         return chinese_num_to_int(m.group(1))
@@ -414,37 +402,6 @@ def extract_chapter_number(title):
         return chinese_num_to_int(m.group(1))
 
     return None
-
-
-def chinese_num_to_int(s):
-    """
-    将中文数字字符串转为int。
-    支持：零~万（改进实现，覆盖常见情况）。
-    例：十二=12，二十=20，一百零五=105，三千零二十=3020，二万一千=21000
-    """
-    num_map = {
-        '零': 0, '〇': 0,
-        '一': 1, '二': 2, '三': 3, '四': 4, '五': 5,
-        '六': 6, '七': 7, '八': 8, '九': 9, '十': 10, '两': 2,
-        '百': 100, '千': 1000, '万': 10000,
-    }
-    result = 0
-    temp = 0
-    for ch in s:
-        if ch not in num_map:
-            continue  # 跳过未知字符
-        val = num_map[ch]
-        if val == 0:  # 零/〇：占位符，不操作
-            continue
-        elif val < 10:  # 个位数
-            temp += val
-        else:  # 十、百、千、万
-            if temp == 0:
-                temp = 1
-            result += temp * val
-            temp = 0
-    result += temp
-    return result
 
 
 def main():

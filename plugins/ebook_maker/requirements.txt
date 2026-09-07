@@ -4,3 +4,6 @@ markdown>=3.5
 beautifulsoup4>=4.12
 html2text>=2024.2.26
 Pillow>=10.0
+# lxml：epub_to_markdown 用 BeautifulSoup(html, 'xml') 解析器所必需。
+# 此前靠 ebooklib 的传递依赖间接可用，显式声明以免上游调整后悄悄崩掉。
+lxml>=4.9

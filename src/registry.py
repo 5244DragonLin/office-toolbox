@@ -7,7 +7,6 @@
 """
 import importlib.util
 import json
-import subprocess
 import sys
 from pathlib import Path
 
@@ -46,7 +45,13 @@ class PluginRegistry:
                 print(f"[registry] 插件 {folder.name} 加载失败: {exc}")
 
     def list_plugins(self) -> list[dict]:
-        """返回首页卡片所需的插件摘要（不含插件代码，只含 manifest 信息）。"""
+        """返回首页卡片所需的插件摘要（不含插件代码，只含 manifest 信息）。
+
+        每次调用前重扫一遍插件目录：扫描只读几个 manifest.json，成本可忽略，
+        却能兑现「装 = 拷贝文件夹，刷新首页即可见，无需重启」的设计承诺。
+        已加载的插件模块（self._modules）不受影响。
+        """
+        self.scan()
         result = []
         for pid in sorted(self._manifests):
             m = self._manifests[pid]
@@ -57,6 +62,9 @@ class PluginRegistry:
                 "description": m.get("description", ""),
                 "icon": m.get("icon", "tool"),
                 "actions": m.get("actions", []),
+                # 是否支持扫码登录（manifest 声明式标记，与插件模块是否已加载无关；
+                # API 文档页据此决定是否展示该插件的登录接口）
+                "login": bool(m.get("login", False)),
                 "loaded": pid in self._modules,
             })
         return result
@@ -77,8 +85,13 @@ class PluginRegistry:
 
     # ---------- 按需加载 ----------
 
-    def load_module(self, pid: str):
-        """按需加载插件代码：首次调用才 import，缺依赖自动安装后重试。"""
+    def load_module(self, pid: str, progress=None):
+        """按需加载插件代码：首次调用才 import，缺依赖自动安装后重试。
+
+        progress：可选的 progress(percent, message) 回调（与插件动作共用同一
+        约定）。首次 import 触发依赖自动安装时逐包上报进度，避免装大包
+        （如 torch）时调用方长时间无任何反馈。
+        """
         if pid in self._modules:
             return self._modules[pid]
         manifest = self._manifests.get(pid)
@@ -96,7 +109,7 @@ class PluginRegistry:
             except ImportError as exc:
                 if attempt == 1:
                     print(f"[registry] 插件 {pid} 依赖缺失（{exc}），正在自动安装…")
-                    self._install_deps(manifest)
+                    self._install_deps(manifest, progress)
                     continue
                 raise RuntimeError(
                     f"插件 {pid} 依赖安装失败：{exc}，请手动执行 "
@@ -104,11 +117,11 @@ class PluginRegistry:
                 ) from exc
 
     @staticmethod
-    def _install_deps(manifest: dict):
-        """安装插件 requirements.txt 中的依赖。"""
-        req_file = Path(manifest["_dir"]) / "requirements.txt"
-        if not req_file.exists():
-            return
-        subprocess.check_call(
-            [sys.executable, "-m", "pip", "install", "-q", "-r", str(req_file)]
-        )
+    def _install_deps(manifest: dict, progress=None):
+        """安装插件 requirements.txt 中的依赖（必选组）。
+
+        复用 deps 的逐包安装：进度逐包上报、失败带 pip 输出尾部；
+        只装必选组——requirements-*.txt 可选组（如转写依赖）不在此被动安装。
+        """
+        from . import deps
+        deps.pip_install_op(manifest["id"], None, progress)

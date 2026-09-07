@@ -3,14 +3,18 @@
   "name": "抖音下载",
   "version": "0.7.0",
   "description": "下载抖音无水印视频/图文（画质可选，默认探测上传原片），提取音频，支持扫码登录",
+  "login": true,
   "icon": "🎵",
   "assets": [
     {
       "id": "chromium",
       "type": "playwright",
       "name": "Chromium 浏览器组件",
-      "description": "「扫码登录抖音」用（Playwright 无头浏览器），首次扫码也会自动下载",
-      "targets": ["chromium", "chromium-headless-shell"],
+      "description": "扫码登录用，首次自动下载",
+      "targets": [
+        "chromium",
+        "chromium-headless-shell"
+      ],
       "size_hint": "100~300MB"
     },
     {
@@ -19,7 +23,7 @@
       "repo": "Systran/faster-whisper-tiny",
       "dir": "faster-whisper-tiny",
       "name": "语音转文字模型 · tiny",
-      "description": "最快最糙，适合短音频快速出稿",
+      "description": "最快，适合短音频",
       "size_hint": "约 75MB"
     },
     {
@@ -28,7 +32,7 @@
       "repo": "Systran/faster-whisper-base",
       "dir": "faster-whisper-base",
       "name": "语音转文字模型 · base",
-      "description": "速度与准确度的折中偏快",
+      "description": "速度与准确度折中",
       "size_hint": "约 145MB"
     },
     {
@@ -37,7 +41,7 @@
       "repo": "Systran/faster-whisper-small",
       "dir": "faster-whisper-small",
       "name": "语音转文字模型 · small（推荐）",
-      "description": "中文口播推荐起步档，转写动作的默认模型",
+      "description": "中文口播推荐档",
       "size_hint": "约 484MB"
     },
     {
@@ -46,7 +50,7 @@
       "repo": "Systran/faster-whisper-medium",
       "dir": "faster-whisper-medium",
       "name": "语音转文字模型 · medium",
-      "description": "更准更慢，有显卡时可用",
+      "description": "更准更慢，有显卡可用",
       "size_hint": "约 1.5GB"
     },
     {
@@ -55,7 +59,7 @@
       "repo": "Systran/faster-whisper-large-v3",
       "dir": "faster-whisper-large",
       "name": "语音转文字模型 · large",
-      "description": "最准最慢，体积大，慎选",
+      "description": "最准最慢，体积大",
       "size_hint": "约 3GB"
     }
   ],
@@ -95,10 +99,22 @@
           "type": "select",
           "default": "original",
           "options": [
-            { "value": "original", "label": "原画探测（推荐）" },
-            { "value": "highest", "label": "最高转码档" },
-            { "value": "1080p", "label": "1080p" },
-            { "value": "720p", "label": "720p" }
+            {
+              "value": "original",
+              "label": "原画探测（推荐）"
+            },
+            {
+              "value": "highest",
+              "label": "最高转码档"
+            },
+            {
+              "value": "1080p",
+              "label": "1080p"
+            },
+            {
+              "value": "720p",
+              "label": "720p"
+            }
           ],
           "hint": "原画=探测上传原片，确认真比转码档大才用，体积可能大数倍；固定档按画面短边匹配，没有就自动落到最接近的档"
         },
@@ -140,9 +156,18 @@
           "type": "select",
           "default": "mp3",
           "options": [
-            { "value": "m4a", "label": "m4a" },
-            { "value": "mp3", "label": "mp3" },
-            { "value": "flac", "label": "flac" }
+            {
+              "value": "m4a",
+              "label": "m4a"
+            },
+            {
+              "value": "mp3",
+              "label": "mp3"
+            },
+            {
+              "value": "flac",
+              "label": "flac"
+            }
           ],
           "hint": "m4a 无损搬运原始音轨（文件最小）· mp3 兼容场景 · flac 无损封装"
         }
@@ -150,8 +175,8 @@
     },
     {
       "id": "transcribe",
-      "name": "下载并转写（语音转文字）",
-      "description": "下载抖音音轨 → 本地 WhisperX 转写为纯文字（.txt）。不保留音视频，只给文字。",
+      "name": "视频转文字",
+      "description": "通过视频音轨转写为本地文本",
       "input": "text",
       "params": [
         {
@@ -168,13 +193,28 @@
           "type": "select",
           "default": "small",
           "options": [
-            { "value": "tiny", "label": "tiny（最快最糙）" },
-            { "value": "base", "label": "base" },
-            { "value": "small", "label": "small（推荐）" },
-            { "value": "medium", "label": "medium（更准更慢）" },
-            { "value": "large", "label": "large（最准最慢）" }
+            {
+              "value": "tiny",
+              "label": "tiny（最快最糙）"
+            },
+            {
+              "value": "base",
+              "label": "base"
+            },
+            {
+              "value": "small",
+              "label": "small（推荐）"
+            },
+            {
+              "value": "medium",
+              "label": "medium（更准更慢）"
+            },
+            {
+              "value": "large",
+              "label": "large（最准最慢）"
+            }
           ],
-          "hint": "中文视频建议 small 起步；有显卡可上 medium/large。首次使用会自动下载模型"
+          "hint": "中文视频建议 small 起步；有显卡可上 medium/large。未安装的模型可到「⚙️ 设置」提前下载"
         },
         {
           "name": "language",
@@ -190,35 +230,6 @@
           "type": "text",
           "required": false,
           "placeholder": "留空即可，已扫码登录会自动生效"
-        }
-      ]
-    },
-    {
-      "id": "transcribe_file",
-      "name": "本地音视频转写",
-      "description": "上传本地音视频文件 → 本地 WhisperX 转写为纯文字（.txt）。",
-      "input": "file",
-      "accept": ".mp4,.mkv,.mov,.avi,.mp3,.m4a,.flac,.wav,.webm",
-      "params": [
-        {
-          "name": "model_size",
-          "label": "模型大小（越大越准越慢）",
-          "type": "select",
-          "default": "small",
-          "options": [
-            { "value": "tiny", "label": "tiny（最快最糙）" },
-            { "value": "base", "label": "base" },
-            { "value": "small", "label": "small（推荐）" },
-            { "value": "medium", "label": "medium（更准更慢）" },
-            { "value": "large", "label": "large（最准最慢）" }
-          ]
-        },
-        {
-          "name": "language",
-          "label": "语言（留空自动识别）",
-          "type": "text",
-          "required": false,
-          "placeholder": "zh / en / 留空自动"
         }
       ]
     }

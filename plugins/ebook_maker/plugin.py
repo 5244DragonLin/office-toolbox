@@ -6,6 +6,7 @@
 - params: 前端表单提交的参数 dict
 - workdir: 本次任务专属临时目录，输出文件应写在这里
 """
+import re
 import sys
 from pathlib import Path
 
@@ -27,6 +28,12 @@ def _first_file(files: dict) -> Path:
     if not fl:
         raise ValueError("未收到输入文件")
     return Path(fl[0])
+
+
+def _safe_name(name: str) -> str:
+    """文件名净化：书名可能来自用户输入，去掉路径分隔符与 Windows 非法字符。"""
+    cleaned = re.sub(r'[\\/:*?"<>|\r\n\t]+', "_", (name or "").strip()).strip(" ._")
+    return cleaned or "ebook"
 
 
 def act_txt_to_md(files, params, workdir: Path):
@@ -53,7 +60,7 @@ def act_txt_to_md(files, params, workdir: Path):
 
 def act_md_to_epub(files, params, workdir: Path):
     src = _first_file(files)
-    title = params.get("title") or src.stem
+    title = _safe_name(params.get("title") or src.stem)
     out = workdir / f"{title}.epub"
     convert_md_to_epub(
         md_file=src, output_file=out, cover_file=params.get("cover") or None,
@@ -61,21 +68,21 @@ def act_md_to_epub(files, params, workdir: Path):
         publisher=params.get("publisher", ""), isbn=params.get("isbn", ""),
         date=params.get("date", ""), description=params.get("description", ""),
         rights=params.get("rights", ""), subject=params.get("subject", ""),
-        no_check=False,
+        no_check=True,
     )
     return [out]
 
 
 def act_txt_to_epub(files, params, workdir: Path):
     src = _first_file(files)
-    title = params.get("title") or src.stem
+    title = _safe_name(params.get("title") or src.stem)
     out = workdir / f"{title}.epub"
     make_ebook(
         input_path=src, output_path=out, title=title,
         author=params.get("author", ""), cover=params.get("cover") or None,
         publisher=params.get("publisher", ""), isbn=params.get("isbn", ""),
         date=params.get("date", ""), description=params.get("description", ""),
-        keep_md=False, no_check=False, dry_run=False, verbose=False,
+        keep_md=False, no_check=True, dry_run=False, verbose=False,
     )
     return [out]
 

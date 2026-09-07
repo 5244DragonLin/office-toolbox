@@ -131,9 +131,10 @@ def make_ebook(input_path, output_path=None, title="", author="",
     elif ext == '.epub':
         import epub_to_markdown as e2m
         print(f"  检测到 EPUB 文件，执行 EPUB → Markdown ...")
+        # epub_to_markdown 返回 {"md": 输出md路径, "cover": 封面路径或 None}；
+        # 这里只需要它把 md_path 写出来，返回值不使用
         e2m.epub_to_markdown(str(input_path), output_file=str(md_path),
                              include_metadata=True, split_chapters=False)
-        # epub_to_markdown 没有返回值，检查文件是否生成
         if not md_path.exists():
             print("[错误] EPUB 转 Markdown 失败：未生成中间文件")
             return False

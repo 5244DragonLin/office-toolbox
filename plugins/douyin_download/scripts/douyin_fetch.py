@@ -116,6 +116,7 @@ def _real_ms_token() -> str:
         return _fake_ms_token()
     import os as _os
     import tempfile
+    import time as _time
     hdr = tempfile.NamedTemporaryFile("w+", suffix=".txt", delete=False)
     hdr.close()
     try:
@@ -129,7 +130,7 @@ def _real_ms_token() -> str:
                 "dataType": 1,
                 "strData": "",
                 "ulr": "",
-                "tspFromClient": int(time.time() * 1000),
+                "tspFromClient": int(_time.time() * 1000),
             }),
             "https://mssdk.bytedance.com/api/v2/sdk/device_register",
         ])
@@ -228,14 +229,18 @@ def _invalidate_cookie() -> None:
 
 
 def _curl(args: list, as_text: bool = True) -> str:
-    """统一封装 curl 调用（带 -s，跟随重定向，自动重试 2 次）。"""
+    """统一封装 curl 调用（带 -s，跟随重定向，自动重试 2 次）。
+
+    --connect-timeout / --max-time：接口请求是小响应，直接限死总时长；
+    大文件下载走 _download_file（那里用 --speed-limit 探测停滞而非限时）。"""
     # 提取最后一条 URL 参数用于错误定位
     url_hint = ""
     for arg in reversed(args):
         if arg.startswith("http"):
             url_hint = arg[:80]
             break
-    cmd = ["curl", "-s", "-L", "--compressed", "--retry", "2"] + args
+    cmd = ["curl", "-s", "-L", "--compressed", "--retry", "2",
+           "--connect-timeout", "15", "--max-time", "30"] + args
     proc = subprocess.run(cmd, capture_output=True, text=as_text,
                           encoding="utf-8", errors="replace")
     if proc.returncode != 0:
@@ -258,6 +263,10 @@ def _download_file(url: str, headers: list, target: Path, expected_size: int = 0
     文字仍在走。curl 失败仍抛 RuntimeError，与 _curl 行为一致。
 
     放在独立函数而不塞进 _curl：小请求（接口/图片）不需要监控线程的开销。
+
+    卡死防护：不设 --max-time（大文件合法下载可能很慢），但用
+    --speed-limit/--speed-time 兜底——连接停滞（速度低于 1KB/s 持续 60s，
+    典型如 TCP 半开/CDN 掐线）时 curl 自行退出并报错，任务不会永远挂着。
     """
     import os as _os
     import tempfile
@@ -267,6 +276,8 @@ def _download_file(url: str, headers: list, target: Path, expected_size: int = 0
     with open(err.name, "wb") as err_fh:
         proc = subprocess.Popen(
             ["curl", "-s", "-S", "-L", "--compressed", "--retry", "2",
+             "--connect-timeout", "15",
+             "--speed-limit", "1024", "--speed-time", "60",
              "-o", str(target)] + headers + [url],
             stdout=subprocess.DEVNULL, stderr=err_fh,
         )

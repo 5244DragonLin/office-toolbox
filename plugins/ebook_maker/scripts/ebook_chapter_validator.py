@@ -25,70 +25,11 @@ import argparse
 import re
 import time
 import shutil
+from bisect import bisect_left
 from pathlib import Path
 from collections import Counter
 
-
-# ============================================================
-# 中文数字转换
-# ============================================================
-
-# 基础数字映射
-_CN_DIGIT = {
-    "零": 0, "一": 1, "二": 2, "三": 3, "四": 4,
-    "五": 5, "六": 6, "七": 7, "八": 8, "九": 9,
-}
-
-# 位权映射
-_CN_UNIT = {
-    "十": 10,
-    "百": 100,
-    "千": 1000,
-}
-
-
-def chinese_to_arabic(cn_str: str) -> int:
-    """
-    中文数字字符串转阿拉伯数字。
-    支持范围: 一 ~ 九千九百九十九。
-    """
-    if not cn_str:
-        return 0
-
-    # 纯数字（如 "101"）直接返回
-    if cn_str.isdigit():
-        return int(cn_str)
-
-    # 去掉可能的前导"零"
-    cn_str = cn_str.lstrip("零")
-    if not cn_str:
-        return 0
-
-    total = 0
-    current = 0
-    has_unit = False
-
-    for ch in cn_str:
-        if ch in _CN_DIGIT:
-            current = _CN_DIGIT[ch]
-        elif ch in _CN_UNIT:
-            has_unit = True
-            unit = _CN_UNIT[ch]
-            if current == 0:
-                # 十、百、千 前面省略了一
-                current = 1
-            total += current * unit
-            current = 0
-        else:
-            raise ValueError(f"无法识别的中文字符: '{ch}'")
-
-    total += current
-
-    # 处理"零"在中间的情况：一百零一 → 已由上循环自然处理
-    if not has_unit and cn_str in _CN_DIGIT:
-        return _CN_DIGIT[cn_str]
-
-    return total
+from cn_num import chinese_to_arabic  # 中文数字转换（与同目录其他脚本共享）
 
 
 # ============================================================
@@ -246,6 +187,9 @@ def find_unrecognized_headings(content: str, chapters: list[dict]) -> list[dict]
         explanation : 说明文字
     """
     recognized_lines = {ch["line_no"] for ch in chapters}
+    # chapters 由 finditer 产出、行号天然升序：用二分找前后最近章节，
+    # 避免每个未识别标题都线性扫全表（几千章的书是 O(N×M)）
+    chapter_lines = [ch["line_no"] for ch in chapters]
 
     results = []
     for match in _ALL_HEADING_PATTERN.finditer(content):
@@ -258,14 +202,10 @@ def find_unrecognized_headings(content: str, chapters: list[dict]) -> list[dict]
         raw = match.group(0).strip()
         level = len(match.group(1))
 
-        # 找前后最近的已识别章节
-        before = None
-        after = None
-        for ch in chapters:
-            if ch["line_no"] < line_no:
-                before = ch
-            if ch["line_no"] > line_no and after is None:
-                after = ch
+        # 找前后最近的已识别章节（line_no 不会与章节行号相等，已在上面跳过）
+        idx = bisect_left(chapter_lines, line_no)
+        before = chapters[idx - 1] if idx > 0 else None
+        after = chapters[idx] if idx < len(chapters) else None
 
         verdict = "info"
         parts = []

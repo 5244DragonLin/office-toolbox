@@ -157,26 +157,40 @@ async def run_action(pid: str, aid: str, files: list[UploadFile] | None = File(N
     if not manifest or not action:
         return JSONResponse({"success": False, "error": f"插件/动作不存在: {pid}/{aid}"}, status_code=404)
 
-    try:
-        module = registry.load_module(pid)
-    except Exception as exc:  # noqa: BLE001
-        return JSONResponse({"success": False, "error": str(exc)}, status_code=500)
-
-    fn = getattr(module, "ACTIONS", {}).get(aid)
-    if not fn:
-        return JSONResponse({"success": False, "error": f"插件 {pid} 未实现动作 {aid}"}, status_code=500)
-
-    # 工作目录：一次任务一个临时目录；任务标识不合法时退回服务端生成
+    # 工作目录：一次任务一个临时目录；任务标识不合法时退回服务端生成。
+    # exist_ok=True：前端失败重试可能复用同一 task_id，目录残留时不至于 500
     if not re.fullmatch(r"[0-9a-f]{8,32}", task_id or ""):
         task_id = uuid.uuid4().hex
     workdir = TMP_DIR / task_id
-    workdir.mkdir(parents=True)
+    workdir.mkdir(parents=True, exist_ok=True)
 
     try:
-        # 保存上传文件
+        # 按需加载插件代码（首次可能触发依赖自动安装，进度实时上报给
+        # 前端进度弹窗——装大包如 torch 时不再是漫长的无反馈等待）
+        try:
+            module = registry.load_module(pid, progress=_report_progress(task_id))
+        except Exception as exc:  # noqa: BLE001
+            return JSONResponse({"success": False, "error": str(exc)}, status_code=500)
+
+        fn = getattr(module, "ACTIONS", {}).get(aid)
+        if not fn:
+            return JSONResponse({"success": False, "error": f"插件 {pid} 未实现动作 {aid}"}, status_code=500)
+
+        # 保存上传文件。文件名来自客户端、不可信：只取 basename、净化路径分隔符
+        # 与 Windows 非法字符；同名文件（含净化后撞名）追加序号，防止互相覆盖
         saved: dict[str, list[str]] = {}
+        used_names: set[str] = set()
         for upload in files or []:
-            target = workdir / (upload.filename or f"file_{len(saved)}")
+            raw = Path(upload.filename or "").name
+            safe = re.sub(r'[\\/:*?"<>|\r\n\t]+', "_", raw).strip(" ._") or "file"
+            stem, ext = Path(safe).stem, Path(safe).suffix
+            name = safe
+            idx = 2
+            while name in used_names:
+                name = f"{stem}_{idx}{ext}"
+                idx += 1
+            used_names.add(name)
+            target = workdir / name
             target.write_bytes(await upload.read())
             saved.setdefault("files", []).append(str(target))
 
@@ -211,11 +225,18 @@ async def run_action(pid: str, aid: str, files: list[UploadFile] | None = File(N
             if not path.exists():
                 continue
             target = DOWNLOADS_DIR / f"{task_id}_{path.name}"
-            shutil.copy2(path, target)
+            # 契约内产物（workdir 下）直接搬移而非拷贝：workdir 马上会被整体
+            # 删除，拷贝等于把 GB 级视频白白多写一遍磁盘。契约外路径（插件
+            # 返回了别处的文件）仍走拷贝，绝不移动用户自己的文件。
+            if workdir in path.parents:
+                shutil.move(str(path), target)
+            else:
+                shutil.copy2(path, target)
             # 文件名必须整体 URL 编码后再放进链接：抖音图文标题常以 # 话题开头，
             # 而 # 在 URL 里是「页内锚点」分隔符——不编码的话浏览器只会请求 # 之前
             # 的半截路径，服务端必然 404，浏览器把错误 JSON 存下来就变成「坏文件」。
-            result = {"name": path.name, "url": f"/downloads/{quote(target.name)}"}
+            result = {"name": path.name, "url": f"/downloads/{quote(target.name)}",
+                      "size": target.stat().st_size}
             result.update(meta)
             results.append(result)
 
@@ -243,8 +264,8 @@ def get_progress(task_id: str):
 # 前端弹窗展示二维码并轮询。与具体插件的登录实现完全解耦。
 # ---------------------------------------------------------------------------
 
-def _get_login_provider(pid: str) -> dict:
-    module = registry.load_module(pid)
+def _get_login_provider(pid: str, progress=None) -> dict:
+    module = registry.load_module(pid, progress=progress)
     provider = getattr(module, "LOGIN_PROVIDER", None)
     if not provider or not callable(provider.get("start")) or not callable(provider.get("poll")):
         raise LookupError(f"插件 {pid} 不支持扫码登录")
@@ -258,18 +279,19 @@ def login_start_route(pid: str):
     首次扫码可能触发大文件下载（如 Playwright 浏览器组件），本路由同步阻塞到
     二维码就绪才返回；期间前端轮询 /api/login/{pid}/progress 展示下载进度。
     """
-    try:
-        provider = _get_login_provider(pid)
-    except LookupError as exc:
-        return JSONResponse({"success": False, "message": str(exc)}, status_code=404)
-    except Exception as exc:  # noqa: BLE001 — 含插件依赖缺失等
-        return JSONResponse({"success": False, "message": str(exc)}, status_code=500)
-
-    # 进度回调：provider["start"] 声明了 progress 参数（或 **kwargs）才注入，兼容旧契约
     cb = _report_login_progress(pid)
     with _login_progress_lock:
         LOGIN_PROGRESS[pid] = {"active": True, "message": "准备中…"}
     try:
+        # 加载插件本身也可能触发依赖安装（首次扫码装 playwright 等），进度同样上报
+        try:
+            provider = _get_login_provider(pid, progress=cb)
+        except LookupError as exc:
+            return JSONResponse({"success": False, "message": str(exc)}, status_code=404)
+        except Exception as exc:  # noqa: BLE001 — 含插件依赖缺失等
+            return JSONResponse({"success": False, "message": str(exc)}, status_code=500)
+
+        # provider["start"] 声明了 progress 参数（或 **kwargs）才注入进度回调，兼容旧契约
         accepts = False
         try:
             sig = inspect.signature(provider["start"])
@@ -322,6 +344,10 @@ class _PipBody(BaseModel):
 class _AssetBody(BaseModel):
     pid: str
     asset_id: str
+
+
+class _PidBody(BaseModel):
+    pid: str
 
 
 _setup_op_lock = threading.Lock()   # 同一时间只允许一个安装/卸载操作
@@ -420,9 +446,28 @@ def setup_asset_uninstall(body: _AssetBody):
     return {"success": True, "op_id": op_id}
 
 
+@app.post("/api/setup/uninstall-all")
+def setup_uninstall_all(body: _PidBody):
+    """一键卸载某插件已安装的全部依赖（pip 包 + 大组件）。"""
+    if body.pid != deps.SHELL_ID and not _manifest_of(body.pid):
+        return JSONResponse({"success": False, "error": f"插件不存在: {body.pid}"}, status_code=404)
+    groups = deps.deps_overview(registry.manifests())
+    group = next((g for g in groups if g["id"] == body.pid), None)
+    if not group:
+        return JSONResponse({"success": False, "error": f"插件不存在: {body.pid}"}, status_code=404)
+    op_id = _start_setup_op(lambda report: deps.uninstall_all_op(group, report))
+    if not op_id:
+        return JSONResponse({"success": False, "error": "已有安装/卸载操作进行中，请等它完成"}, status_code=409)
+    return {"success": True, "op_id": op_id}
+
+
 @app.get("/downloads/{name}")
 def download(name: str, background_tasks: BackgroundTasks):
-    """下载生成的文件；浏览器取走后即删除本地副本（下载即删）。"""
+    """下载生成的文件；浏览器取走后即删除本地副本（下载即焚）。"""
+    # 文件名校验与 DELETE 路由一致：Windows 下反斜杠也是路径分隔符，
+    # 不拦的话 /downloads/..%5C..%5Cx 可构造出下载区之外的任意文件读取
+    if "/" in name or "\\" in name or name in (".", ".."):
+        return JSONResponse({"success": False, "error": "非法文件名"}, status_code=400)
     path = DOWNLOADS_DIR / name
     if not path.is_file():
         return JSONResponse({"success": False, "error": "文件不存在或已过期（可能已被自动清理）"}, status_code=404)

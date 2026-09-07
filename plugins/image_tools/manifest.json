@@ -1,0 +1,197 @@
+{
+  "id": "image_tools",
+  "name": "图片分辨率工具",
+  "version": "0.1.0",
+  "description": "图片压缩 / 增强 / 分辨率调整，支持单张、多张、文件夹、压缩包（zip/7z）批量输入",
+  "icon": "🖼️",
+  "actions": [
+    {
+      "id": "resize_image",
+      "name": "分辨率调整",
+      "description": "调整像素尺寸：长边/短边/百分比/宽/高 五种目标方式，保持宽高比",
+      "input": "files",
+      "accept": ".jpg,.jpeg,.png,.webp,.bmp,.tif,.tiff,.gif,.zip,.7z",
+      "params": [
+        {
+          "name": "mode",
+          "label": "目标方式",
+          "type": "select",
+          "default": "long_edge",
+          "options": [
+            { "value": "long_edge", "label": "目标长边（横竖混排对齐，视觉均匀）" },
+            { "value": "short_edge", "label": "目标短边" },
+            { "value": "percent", "label": "缩放百分比" },
+            { "value": "width", "label": "指定宽（定宽保比，适合固定宽度版面）" },
+            { "value": "height", "label": "指定高（定高保比）" }
+          ],
+          "hint": "长边/短边是「以图为准」：每张图各自较长/较短的那条边对齐目标值；宽/高是「以版面为准」：该轴无条件对齐"
+        },
+        {
+          "name": "value",
+          "label": "目标值",
+          "type": "number",
+          "required": true,
+          "placeholder": "如 1920",
+          "hint": "含义由目标方式决定：长边/短边/宽/高 = 像素值；百分比 = 1-500（如 50 表示缩小一半）"
+        },
+        {
+          "name": "no_upscale",
+          "label": "只缩不放",
+          "type": "select",
+          "default": "no",
+          "options": [
+            { "value": "no", "label": "否（允许放大）" },
+            { "value": "yes", "label": "是（目标大于原图时保持原尺寸）" }
+          ],
+          "hint": "批量处理时防止小图被放大变虚"
+        },
+        {
+          "name": "interp",
+          "label": "插值算法",
+          "type": "select",
+          "default": "LANCZOS",
+          "options": [
+            { "value": "LANCZOS", "label": "LANCZOS（推荐，细节保留最好）" },
+            { "value": "BICUBIC", "label": "BICUBIC" },
+            { "value": "BILINEAR", "label": "BILINEAR（快，略糊）" },
+            { "value": "NEAREST", "label": "NEAREST（像素风图片用）" }
+          ]
+        },
+        {
+          "name": "format",
+          "label": "输出格式",
+          "type": "select",
+          "default": "keep",
+          "options": [
+            { "value": "keep", "label": "保持原格式" },
+            { "value": "jpg", "label": "JPG" },
+            { "value": "png", "label": "PNG" },
+            { "value": "webp", "label": "WebP" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "compress_image",
+      "name": "图片压缩",
+      "description": "减小文件体积，像素默认不变：按质量压缩或按目标体积二分逼近",
+      "input": "files",
+      "accept": ".jpg,.jpeg,.png,.webp,.bmp,.tif,.tiff,.gif,.zip,.7z",
+      "params": [
+        {
+          "name": "target",
+          "label": "压缩目标",
+          "type": "select",
+          "default": "quality",
+          "options": [
+            { "value": "quality", "label": "按质量压缩" },
+            { "value": "size", "label": "按目标体积压缩（KB）" }
+          ],
+          "hint": "按体积：自动二分寻找最接近目标体积的画质，不会明显低于目标"
+        },
+        {
+          "name": "quality",
+          "label": "质量（%）",
+          "type": "number",
+          "default": "75",
+          "showWhen": { "target": "quality" },
+          "placeholder": "如 75",
+          "hint": "越小体积越小、画质越低；70-85 通常肉眼难辨差异"
+        },
+        {
+          "name": "target_kb",
+          "label": "目标体积（KB）",
+          "type": "number",
+          "showWhen": { "target": "size" },
+          "placeholder": "如 500",
+          "hint": "单张图片的目标大小；达不到时给出最低质量的尽力而为结果"
+        },
+        {
+          "name": "scale",
+          "label": "叠加缩放（%）",
+          "type": "number",
+          "default": "100",
+          "placeholder": "100 = 不缩放",
+          "hint": "压缩的同时可顺带缩小像素尺寸，如 50 = 宽高各缩一半；填 100 则像素不变"
+        },
+        {
+          "name": "format",
+          "label": "输出格式",
+          "type": "select",
+          "default": "keep",
+          "options": [
+            { "value": "keep", "label": "保持原格式" },
+            { "value": "jpg", "label": "JPG" },
+            { "value": "webp", "label": "WebP（同画质体积更小，推荐）" }
+          ],
+          "hint": "保持原格式 + PNG 时无法按目标体积压缩（PNG 无损）；压完反而更大的图自动保留原图"
+        }
+      ]
+    },
+    {
+      "id": "enhance_image",
+      "name": "图片增强",
+      "description": "观感质量增强：2倍放大 / 锐化 / 自动对比度 / 降噪，可叠加",
+      "input": "files",
+      "accept": ".jpg,.jpeg,.png,.webp,.bmp,.tif,.tiff,.gif,.zip,.7z",
+      "params": [
+        {
+          "name": "upscale",
+          "label": "2倍放大",
+          "type": "select",
+          "default": "no",
+          "options": [
+            { "value": "no", "label": "否" },
+            { "value": "yes", "label": "是（LANCZOS 放大 + 二次锐化）" }
+          ],
+          "hint": "插值放大 2 倍后自动补一次锐化，把放大产生的软边收回来"
+        },
+        {
+          "name": "sharpen",
+          "label": "锐化",
+          "type": "select",
+          "default": "medium",
+          "options": [
+            { "value": "none", "label": "不锐化" },
+            { "value": "light", "label": "轻度" },
+            { "value": "medium", "label": "中度（推荐）" },
+            { "value": "strong", "label": "强度" }
+          ]
+        },
+        {
+          "name": "autocontrast",
+          "label": "自动对比度",
+          "type": "select",
+          "default": "no",
+          "options": [
+            { "value": "no", "label": "否" },
+            { "value": "yes", "label": "是（拉伸灰阶范围，发灰的图变通透）" }
+          ]
+        },
+        {
+          "name": "denoise",
+          "label": "降噪",
+          "type": "select",
+          "default": "no",
+          "options": [
+            { "value": "no", "label": "否" },
+            { "value": "yes", "label": "是（中值滤波，去彩色噪点）" }
+          ],
+          "hint": "先降噪后锐化：噪点会被锐化放大，有噪点的图建议同时开启"
+        },
+        {
+          "name": "format",
+          "label": "输出格式",
+          "type": "select",
+          "default": "keep",
+          "options": [
+            { "value": "keep", "label": "保持原格式" },
+            { "value": "jpg", "label": "JPG" },
+            { "value": "png", "label": "PNG" },
+            { "value": "webp", "label": "WebP" }
+          ]
+        }
+      ]
+    }
+  ]
+}

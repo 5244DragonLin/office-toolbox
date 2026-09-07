@@ -530,6 +530,12 @@ def download_audio(url: str, output_dir: Path, fmt: str = "mp3", sessdata: str =
     return str(mp3)
 
 
+def _safe_filename(name: str, max_len: int = 80) -> str:
+    """文件名净化：视频标题直接来自 B站 API，去掉路径分隔符与 Windows 非法字符。"""
+    cleaned = re.sub(r'[\\/:*?"<>|\r\n\t]+', "_", (name or "").strip()).strip(" ._")
+    return (cleaned or "bilibili")[:max_len]
+
+
 def get_subtitle(url: str, output_dir: Path, sessdata: str = "") -> str:
     """下载 B站视频的 CC 字幕（yutto --subtitle-only），SRT 结果只保留中文。
 
@@ -540,7 +546,7 @@ def get_subtitle(url: str, output_dir: Path, sessdata: str = "") -> str:
     files = _run_yutto(args, output_dir, allow_empty=True)
     srt_files = sorted(p for p in files if p.suffix.lower() == ".srt")
 
-    title = get_video_title(url)
+    title = _safe_filename(get_video_title(url))
 
     # SRT 只保留中文：各语言字幕分别过滤后合并，序号全局重排
     had_subtitles = False
@@ -610,7 +616,7 @@ _BILI_LOGIN: dict = {"token": "", "created_at": 0.0}
 
 def _bilibili_api_get(url: str, params: dict, cookie: str = None) -> dict:
     """调用 B站 Web API（GET），返回 JSON。"""
-    query = "&".join(f"{k}={urllib.parse.quote(str(v))}" for k, v in params.items())
+    query = "&".join(f"{k}={quote(str(v))}" for k, v in params.items())
     req = urllib.request.Request(f"{url}?{query}", headers={
         "User-Agent": _UA,
         "Referer": "https://www.bilibili.com/",

@@ -54,6 +54,8 @@
   .btn:disabled { opacity: .6; cursor: not-allowed; }
   .btn-mini { padding: 6px 12px; background: var(--accent-bg); color: var(--accent); border: 1px solid var(--accent); border-radius: 8px; font-size: 13px; cursor: pointer; }
   .btn-mini:hover { background: var(--accent); color: #fff; }
+  .btn-mini.danger { background: #fdecec; color: #c0392b; border-color: #eab6b2; }
+  .btn-mini.danger:hover { background: #c0392b; border-color: #c0392b; color: #fff; }
   .btn-mini:disabled { opacity: .5; cursor: not-allowed; }
   #audioPreview audio { width: 100%; display: block; margin: 6px 0 10px; }
   .audio-toolbar { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
@@ -87,27 +89,63 @@
   #progressMask .pg-bar, #loginMask .pg-bar { height: 12px; background: var(--border); border-radius: 99px; overflow: hidden; margin: 16px 0 8px; }
   #progressMask .pg-bar > div, #loginMask .pg-bar > div { height: 100%; width: 0%; background: linear-gradient(90deg, #2f6fed, #6f9bf3); border-radius: 99px; transition: width .4s; }
   #progressMask .pg-meta, #loginMask .pg-meta { display: flex; justify-content: space-between; gap: 10px; font-size: 12px; color: var(--muted); }
+  /* 进度消息固定单行：超出省略号截断，避免长日志把弹窗撑得来回伸缩 */
+  #progressMask .pg-meta #pgMsg { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  #progressMask .pg-meta #pgPct { flex-shrink: 0; }
   /* ===== 设置页：依赖管理 ===== */
-  .set-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 16px; }
+  .set-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 16px; padding-right: 21px; }
+  /* padding-right 21px = 卡片 border(1px) + padding(20px)：让「↻ 刷新」与下方卡片里
+     一列卸载按钮的右缘对齐（卡片内按钮右缘 = 页面内容区右缘 - 21px） */
   .set-head h2 { font-size: 17px; margin-bottom: 4px; }
   .set-head .hint { font-size: 13px; color: var(--muted); line-height: 1.6; }
   .dep-group { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px 20px; margin-bottom: 14px; }
   .dep-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
   .dep-head .d-name { font-size: 15px; font-weight: 600; }
+  .dep-head .btn-uninstall-all { margin-left: auto; }
   .dep-badge { font-size: 11px; padding: 2px 8px; border-radius: 99px; white-space: nowrap; }
   .dep-badge.ok { background: #e9f6ec; color: #1f7a3d; }
   .dep-badge.miss { background: #fdecec; color: #c0392b; }
   .dep-desc { font-size: 12px; color: var(--muted); margin: 6px 0 4px; line-height: 1.6; }
-  .dep-table { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 8px; }
-  .dep-table td { padding: 7px 8px; border-top: 1px solid var(--border); vertical-align: middle; }
+  .dep-table { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 8px; table-layout: fixed; }
+  /* 首列固定比例宽：不同工具卡片的说明列（d-info）起点一致且靠近卡片中部 */
+  .dep-table td.d-item { width: 36%; }
+  .dep-table td { padding: 7px 8px; border-top: 1px solid var(--border); vertical-align: middle; overflow: hidden; text-overflow: ellipsis; }
   .dep-table tr:first-child td { border-top: none; }
-  .dep-table td.d-info { color: var(--muted); font-size: 12px; }
-  .dep-table td.d-op { text-align: right; white-space: nowrap; }
+  .dep-table td.d-info { color: var(--muted); font-size: 12px; white-space: nowrap; }
+  .dep-table td.d-op { text-align: right; white-space: nowrap; padding-right: 0; }
   .dep-table td.d-op .btn-mini + .btn-mini { margin-left: 6px; }
   .dep-actions { margin-top: 12px; }
   #viewSettings.busy .dep-table button, #viewSettings.busy .dep-actions button { opacity: .45; pointer-events: none; }
   .set-error { margin-bottom: 12px; padding: 10px 14px; background: #fdecec; color: #c0392b; border-radius: 8px; font-size: 13px; white-space: pre-line; }
-  @media (max-width: 760px) { .tool-layout { flex-direction: column; } .tool-side { width: 100%; } }
+  /* ===== 首页底部：API 接口入口 =====
+     #viewHome 用 flex column + min-height 让卡片墙不论多少张都能贴顶显示，
+     .home-footer 用 margin-top: auto 始终贴底，避免大片空白把按钮悬在中部 */
+  #viewHome { display: flex; flex-direction: column; min-height: calc(100vh - 50px); }
+  .home-footer { text-align: center; margin-top: auto; padding: 24px 0 6px; }
+  /* ===== API 接口文档页 ===== */
+  .api-sec { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px 20px; margin-bottom: 14px; }
+  .api-sec h3 { font-size: 15px; margin-bottom: 4px; }
+  .api-sec .api-sub { font-size: 12px; color: var(--muted); margin-bottom: 10px; line-height: 1.6; }
+  .api-base { font-family: Consolas, Menlo, monospace; font-size: 12px; background: var(--accent-bg); color: var(--accent); padding: 2px 8px; border-radius: 5px; }
+  .api-endpoint { display: flex; align-items: baseline; gap: 8px; padding: 7px 0; border-top: 1px solid var(--border); font-size: 13px; flex-wrap: wrap; }
+  .api-endpoint:first-of-type { border-top: none; }
+  .method { font-weight: 600; font-size: 11px; padding: 2px 7px; border-radius: 4px; flex-shrink: 0; font-family: Consolas, Menlo, monospace; }
+  .method.GET { background: #e9f6ec; color: #1f7a3d; }
+  .method.POST { background: var(--accent-bg); color: var(--accent); }
+  .method.DELETE { background: #fdecec; color: #c0392b; }
+  .api-path { font-family: Consolas, Menlo, monospace; font-size: 12px; }
+  .api-desc { color: var(--muted); font-size: 12px; }
+  .api-code { position: relative; background: #f6f8fa; border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; margin: 8px 0 4px; font-family: Consolas, Menlo, monospace; font-size: 12px; line-height: 1.6; white-space: pre-wrap; word-break: break-all; cursor: pointer; }
+  .api-code:hover { border-color: var(--accent); }
+  .api-code .copy-tip { position: absolute; top: 6px; right: 8px; font-size: 11px; color: #1f7a3d; background: #e9f6ec; border-radius: 4px; padding: 1px 6px; opacity: 0; transition: opacity .15s; pointer-events: none; }
+  .api-code.copied .copy-tip { opacity: 1; }
+  .api-table { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 6px; table-layout: fixed; }
+  .api-table th { text-align: left; color: var(--muted); font-weight: 500; padding: 4px 8px; border-bottom: 1px solid var(--border); }
+  .api-table td { padding: 5px 8px; border-top: 1px solid var(--border); vertical-align: top; word-break: break-all; }
+  .api-table td:first-child { font-family: Consolas, Menlo, monospace; }
+  .req { color: #c0392b; font-size: 11px; }
+  .api-badge { display: inline-block; font-size: 11px; padding: 1px 8px; border-radius: 99px; background: var(--accent-bg); color: var(--accent); margin-left: 8px; }
+  @media (max-width: 760px) { .tool-layout { flex-direction: column; } .tool-side { width: 100%; } .dep-table td.d-item { width: 180px; } }
 </style>
 </head>
 <body>
@@ -120,6 +158,9 @@
 
 <div class="view" id="viewHome">
   <div class="grid" id="cardGrid"></div>
+  <div class="home-footer">
+    <button class="btn-mini" id="btnApiDoc" title="所有工具均可通过 HTTP API 调用">🔌 API 接口</button>
+  </div>
 </div>
 
 <div class="view" id="viewTool" style="display:none">
@@ -167,6 +208,17 @@
   <div id="depsList"></div>
 </div>
 
+<div class="view" id="viewApi" style="display:none">
+  <div class="set-head">
+    <div>
+      <h2>🔌 API 接口文档</h2>
+      <div class="hint">所有工具既能在网页里用，也能以 HTTP API 调用。文档由各插件的 manifest 自动生成，装了新插件刷新本页即可看到。</div>
+    </div>
+    <button class="btn-mini" id="btnApiRefresh">↻ 刷新</button>
+  </div>
+  <div id="apiDoc"></div>
+</div>
+
 <div class="modal-mask" id="progressMask" style="display:none">
   <div class="modal" role="dialog" aria-modal="true">
     <div class="m-icon">⏳</div>
@@ -197,6 +249,10 @@
 
 <script>
 const $ = s => document.querySelector(s);
+// HTML 转义：所有进入 innerHTML 的动态文本（插件 manifest 文案、转换结果的
+// 文件名等，后者常来自抖音/B站标题）都必须过这一层，防止 < > " 破坏页面结构
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c =>
+  ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 let plugins = [], current = null, currentAction = null, selectedFiles = [];
 // 已转换但尚未下载的结果文件（返回首页时若存在则提示并清理，对所有工具生效）
 let pendingFiles = [];
@@ -212,9 +268,9 @@ function renderCards() {
   const grid = $('#cardGrid');
   if (!plugins.length) { grid.innerHTML = '<div class="empty">还没有安装任何插件。<br>把插件文件夹放进 plugins/ 目录后刷新即可。</div>'; return; }
   grid.innerHTML = plugins.map(p => `
-    <div class="card" onclick="openPlugin('${p.id}')">
-      <div class="name">${p.icon || '🧰'} ${p.name} <span style="font-size:11px;color:var(--muted);font-weight:400">v${p.version}</span></div>
-      <div class="desc">${p.description}</div>
+    <div class="card" onclick="openPlugin('${esc(p.id)}')">
+      <div class="name">${esc(p.icon || '🧰')} ${esc(p.name)} <span style="font-size:11px;color:var(--muted);font-weight:400">v${esc(p.version)}</span></div>
+      <div class="desc">${esc(p.description)}</div>
       <span class="actions">${p.actions.length} 个子功能 · 按需加载</span>
     </div>`).join('');
 }
@@ -228,11 +284,19 @@ function openPlugin(pid) {
   $('#viewTool').style.display = 'block';
   $('#btnBack').style.display = 'block';
   $('#resultBox').innerHTML = ''; $('#errorBox') && $('#errorBox').remove();
+  if (!current.actions || !current.actions.length) {
+    // manifest 没有声明任何子功能的插件：提示而不是在渲染时崩掉
+    $('#actionList').innerHTML = '';
+    $('#actTitle').textContent = current.name;
+    $('#actHint').textContent = '该插件没有声明任何子功能，请检查其 manifest.json';
+    $('#paramFields').innerHTML = '';
+    return;
+  }
   const list = $('#actionList');
   list.innerHTML = current.actions.map((a, i) => `
-    <div class="t-item ${i === 0 ? 'active' : ''}" onclick="selectAction('${a.id}')">
-      ${a.name}
-      <div class="t-desc">${a.description}</div>
+    <div class="t-item ${i === 0 ? 'active' : ''}" onclick="selectAction('${esc(a.id)}')">
+      ${esc(a.name)}
+      <div class="t-desc">${esc(a.description)}</div>
     </div>`).join('');
   selectAction(current.actions[0].id);
 }
@@ -255,7 +319,7 @@ function selectAction(aid) {
     $('#dropText').textContent = '';
   } else {
     if (fileFieldEl) fileFieldEl.style.display = '';
-    $('#dropText').textContent = currentAction.input === 'files' ? '点击或拖拽文件到此处（可多选）' : '点击或拖拽文件到此处';
+    $('#dropText').textContent = currentAction.input === 'files' ? '点击或拖拽文件到此处（可多选，支持整个文件夹）' : '点击或拖拽文件到此处';
   }
   $('#resultBox').innerHTML = ''; $('#errorBox') && $('#errorBox').remove();
   const drop = $('#dropZone');
@@ -270,11 +334,11 @@ function renderParamControl(p) {
       const val = (o && o.value !== undefined) ? o.value : o;
       const lbl = (o && o.label !== undefined) ? o.label : o;
       const sel = (String(val) === String(p.default || '')) ? ' selected' : '';
-      return `<option value="${val}"${sel}>${lbl}</option>`;
+      return `<option value="${esc(val)}"${sel}>${esc(lbl)}</option>`;
     }).join('');
     return `<select id="${id}">${opts}</select>`;
   }
-  return `<input type="${p.type === 'number' ? 'number' : 'text'}" id="${id}" placeholder="${p.placeholder || ''}" value="${p.default || ''}">`;
+  return `<input type="${p.type === 'number' ? 'number' : 'text'}" id="${id}" placeholder="${esc(p.placeholder || '')}" value="${esc(p.default || '')}">`;
 }
 
 function renderParams() {
@@ -283,10 +347,10 @@ function renderParams() {
   if (!params.length) { box.innerHTML = ''; $('#tipLine').textContent = ''; return; }
   const heading = '参数';
   box.innerHTML = `<div class="field"><label>${heading}</label></div>` + params.map(p => `
-    <div class="field" data-param="${p.name}">
-      <label>${p.label}${p.required ? ' <span style="color:#c0392b">*</span>' : ''}</label>
+    <div class="field" data-param="${esc(p.name)}">
+      <label>${esc(p.label)}${p.required ? ' <span style="color:#c0392b">*</span>' : ''}</label>
       ${renderParamControl(p)}
-      ${p.hint ? `<div class="check">${p.hint}</div>` : ''}
+      ${p.hint ? `<div class="check">${esc(p.hint)}</div>` : ''}
     </div>`).join('');
   // 联动显隐：当某个 select 参数等于指定值时显示/隐藏本参数
   params.forEach(p => {
@@ -319,11 +383,43 @@ drop.addEventListener('click', () => {
 });
 drop.addEventListener('dragover', e => { e.preventDefault(); drop.classList.add('drag'); });
 drop.addEventListener('dragleave', () => drop.classList.remove('drag'));
-drop.addEventListener('drop', e => { e.preventDefault(); drop.classList.remove('drag'); addFiles(e.dataTransfer.files); });
+drop.addEventListener('drop', async e => {
+  e.preventDefault(); drop.classList.remove('drag');
+  // 拖入文件夹时 dataTransfer.files 拿不到内容，需走 webkitGetAsEntry 递归收集；
+  // entries 必须在第一个 await 之前全部取出（DataTransferItem 仅在事件内有效）
+  const entries = [];
+  if (e.dataTransfer.items && e.dataTransfer.items.length && e.dataTransfer.items[0].webkitGetAsEntry) {
+    for (const item of e.dataTransfer.items) {
+      const en = item.webkitGetAsEntry();
+      if (en) entries.push(en);
+    }
+  }
+  if (entries.some(en => en.isDirectory)) {
+    const collected = [];
+    for (const en of entries) await walkEntry(en, collected);
+    if (collected.length) { addFiles(collected); return; }
+  }
+  addFiles(e.dataTransfer.files);
+});
+
+// 递归遍历拖入的目录/文件。readEntries 每次最多返回 100 条，必须循环读到空为止
+async function walkEntry(entry, out) {
+  if (entry.isFile) {
+    const f = await new Promise(res => entry.file(res, () => res(null)));
+    if (f) out.push(f);
+  } else if (entry.isDirectory) {
+    const reader = entry.createReader();
+    while (true) {
+      const batch = await new Promise(res => reader.readEntries(res, () => res([])));
+      if (!batch.length) break;
+      for (const child of batch) await walkEntry(child, out);
+    }
+  }
+}
 
 function renderSelectedFiles() {
   $('#fileList').innerHTML = selectedFiles.map((f, i) =>
-    `<div>📄 ${f.name}<span class="f-remove" data-i="${i}" title="移除该文件">✕ 删除</span></div>`).join('');
+    `<div>📄 ${esc(f.name)}<span class="f-remove" data-i="${i}" title="移除该文件">✕ 删除</span></div>`).join('');
   $('#dropText').textContent = selectedFiles.length ? `已选 ${selectedFiles.length} 个文件，继续点击可添加` : '点击或拖拽文件到此处';
   updateAudioPreview();
 }
@@ -570,11 +666,8 @@ function openLoginDialog() {
   };
   const stopPoll = () => { if (loginPollTimer) { clearInterval(loginPollTimer); loginPollTimer = null; } };
 
-  // 遮罩点击 = 放弃本次扫码（后台会话在下次 start 时自动重建/过期自清）
-  // 改为只有点击右上角 × 关闭，防止选中文字时弹窗误关
-  mask.addEventListener('click', e => {
-    if (e.target === mask && e.button === 2) { stopPoll(); closeLoginDialog(); }
-  });
+  // 只有点右上角 × 才关闭（closeLoginDialog 会停掉轮询定时器）：
+  // 遮罩点击不关闭，防止用户选中二维码/文字时误触
   start();
 }
 
@@ -627,9 +720,28 @@ $('#btnRun').addEventListener('click', async () => {
 });
 
 /* ============ 结果渲染：多文件时可勾选下载（通用能力，插件返回 start/end 时展示片段区间） ============ */
+// 下载阈值：超过它改用 <a download> 直链让浏览器流式下载，避免 fetch+blob 把
+// 整个大文件（GB 级视频）吃进内存。直链文件由服务端「响应发完即焚」负责删除，
+// 前端不再对其发 DELETE（见 downloadFiles 返回值说明）。
+const DIRECT_DL_THRESHOLD = 200 * 1024 * 1024;
+
 async function downloadFiles(list) {
+  // 返回走直链下载的文件列表。这些文件的下载在 a.click() 后仍由浏览器
+  // 传输中，调用方清理服务端文件时应跳过它们：
+  //   - 小文件（blob）：fetch 完整取回后才返回，立即 DELETE 安全；
+  //   - 直链大文件：服务端 GET 路由在响应流结束后自动焚毁（下载即焚），
+  //     若前端此时发 DELETE，轻则撞上传输中的文件（Windows 删除失败静默
+  //     残留，只能靠 TTL 兜底），重则赶在服务端打开文件前删掉导致下载 404。
+  const direct = [];
   for (const f of list) {
     try {
+      if ((f.size || 0) > DIRECT_DL_THRESHOLD) {
+        const a = document.createElement('a');
+        a.href = f.url; a.download = f.name;
+        document.body.appendChild(a); a.click(); a.remove();
+        direct.push(f);
+        continue;
+      }
       const resp = await fetch(f.url);
       if (!resp.ok) {  // 404 等错误响应的 JSON body 不能存成文件（否则出现打不开的"坏图片"）
         console.error('下载失败(HTTP ' + resp.status + '):', f.name);
@@ -644,6 +756,7 @@ async function downloadFiles(list) {
       setTimeout(() => URL.revokeObjectURL(url), 30_000);
     } catch (e) { console.error('下载失败:', f.name, e); }
   }
+  return direct;
 }
 
 /* 清理本次任务的全部结果文件（下载选中的被"下载即焚"，未选中的在这里一并删除，不再等待 TTL） */
@@ -660,7 +773,7 @@ function renderResults(data) {
     const f = files[0];
     $('#resultBox').innerHTML = `
       <div style="font-size:13px;font-weight:600;margin-bottom:6px">✅ 转换完成：</div>
-      <a href="${f.url}" download>⬇ ${f.name}</a>`;
+      <a href="${esc(f.url)}" download>⬇ ${esc(f.name)}</a>`;
     // 单文件：点击下载（下载即焚）后视为已处理，返回首页不再提示
     $('#resultBox a').addEventListener('click', () => { pendingFiles = []; });
     return;
@@ -670,21 +783,23 @@ function renderResults(data) {
     const range = hasRange ? `${fmtTime(f.start)} - ${fmtTime(f.end)}` : '';
     const isImage = /\.(png|jpe?g|webp|gif|bmp|tiff?)$/i.test(f.name) || f.kind === 'cover';
     if (isImage) {
-      // 封面等图片：明确标注，不内联预览（/downloads 路由下载即焚，内联 <img> 会误删）
+      // 图片：明确标注，不内联预览（/downloads 路由下载即焚，内联 <img> 会误删）。
+      // kind=cover 是电子书封面；其余图片（如抖音图文）按图片计数展示，不冒称封面
+      const label = f.kind === 'cover' ? '🖼 封面' : '🖼 图片';
       return `
         <label class="file-row">
-          <input type="checkbox" class="dl-check" data-url="${f.url}" data-name="${f.name}">
-          <span class="f-main">🖼 封面</span>
-          <span class="f-sub">${f.name}</span>
+          <input type="checkbox" class="dl-check" data-url="${esc(f.url)}" data-name="${esc(f.name)}">
+          <span class="f-main">${label}</span>
+          <span class="f-sub">${esc(f.name)}</span>
         </label>`;
     }
     const main = f.kind === 'md' ? '📄 正文'
                : (hasRange ? `第 ${i + 1} 段${range ? ` · ${range}` : ''}` : `第 ${i + 1} 项`);
     return `
       <label class="file-row">
-        <input type="checkbox" class="dl-check" data-url="${f.url}" data-name="${f.name}">
+        <input type="checkbox" class="dl-check" data-url="${esc(f.url)}" data-name="${esc(f.name)}">
         <span class="f-main">${main}</span>
-        <span class="f-sub">${f.name}</span>
+        <span class="f-sub">${esc(f.name)}</span>
       </label>`;
   }).join('');
   $('#resultBox').innerHTML = `
@@ -712,8 +827,11 @@ function renderResults(data) {
     const sel = checks.filter(c => c.checked).map(c => ({ url: c.dataset.url, name: c.dataset.name }));
     if (!sel.length) return;
     btn.disabled = true; btn.textContent = '下载中…';
-    await downloadFiles(sel);
-    await cleanupTaskFiles(files);   // 下载完成，本次任务全部文件立即清理（含未勾选的）
+    const direct = await downloadFiles(sel);
+    // 直链大文件由服务端响应结束后自动焚毁，前端只清理其余文件
+    //（已取走的小文件 + 未勾选的一切）
+    const directUrls = new Set(direct.map(f => f.url));
+    await cleanupTaskFiles(files.filter(f => !directUrls.has(f.url)));
     pendingFiles = [];  // 已下载并清理，返回首页时不再提示
     btn.disabled = false; btn.textContent = '✅ 已下载并清理';
     checks.forEach(c => { c.checked = false; });
@@ -735,17 +853,19 @@ function showConfirm({ icon = '⚠️', title = '提示', message = '', okText =
     mask.className = 'modal-mask';
     mask.innerHTML = `
       <div class="modal" role="dialog" aria-modal="true">
-        <div class="m-icon">${icon}</div>
-        <div class="m-title">${title}</div>
-        <div class="m-msg">${message.replace(/</g, '&lt;')}</div>
+        <div class="m-icon">${esc(icon)}</div>
+        <div class="m-title">${esc(title)}</div>
+        <div class="m-msg">${esc(message).replace(/\n/g, '\n')}</div>
         <div class="m-actions">
           <button class="m-btn" id="mCancel">取消</button>
-          <button class="m-btn ${okClass}" id="mOk">${okText}</button>
+          <button class="m-btn ${okClass}" id="mOk">${esc(okText)}</button>
         </div>
       </div>`;
     document.body.appendChild(mask);
     requestAnimationFrame(() => mask.classList.add('show'));
+    const onKey = e => { if (e.key === 'Escape') done(false); };
     const done = val => {
+      document.removeEventListener('keydown', onKey);  // 不留悬挂监听器
       mask.classList.remove('show');
       setTimeout(() => mask.remove(), 180);
       resolve(val);
@@ -753,7 +873,6 @@ function showConfirm({ icon = '⚠️', title = '提示', message = '', okText =
     mask.addEventListener('click', e => { if (e.target === mask) done(false); });
     mask.querySelector('#mCancel').addEventListener('click', () => done(false));
     mask.querySelector('#mOk').addEventListener('click', () => done(true));
-    const onKey = e => { if (e.key === 'Escape') { done(false); document.removeEventListener('keydown', onKey); } };
     document.addEventListener('keydown', onKey);
     // 聚焦确认按钮，回车可确认
     setTimeout(() => mask.querySelector('#mOk').focus(), 60);
@@ -762,10 +881,12 @@ function showConfirm({ icon = '⚠️', title = '提示', message = '', okText =
 }
 
 function goHome() {
-  // 设置页可能正开着，先复位其状态
+  // 设置页 / API 文档页可能正开着，先复位其状态
   settingsOpen = false;
   $('#viewSettings').style.display = 'none';
   $('#btnSettings').classList.remove('active');
+  apiOpen = false;
+  $('#viewApi').style.display = 'none';
   // 有未下载的转换结果：先提示，确认后删除本次任务全部文件再返回（对所有工具统一生效）
   if (pendingFiles.length) {
     const n = pendingFiles.length;
@@ -800,6 +921,193 @@ function goHome() {
 $('#btnBack').addEventListener('click', goHome);
 $('#logoHome').addEventListener('click', goHome);
 
+/* ============ API 接口文档页（由 /api/plugins 的 manifest 自动生成） ============
+ * 壳的执行/进度/下载/登录/依赖接口本身就是 API；本页只负责把它们和各插件
+ * 动作的参数声明、curl 示例组织成可读文档，与卡片墙共用同一份数据源——
+ * 装了新插件刷新即见，无需维护第二份文档。 */
+let apiOpen = false;
+
+const PARAM_TYPE_TEXT = { text: '文本', number: '数字', select: '下拉' };
+
+function apiInputDesc(action) {
+  if (action.input === 'text') return '无需上传文件，参数中传文本（如链接）';
+  if (action.input === 'file') return `上传单个文件（${action.accept || '任意类型'}）`;
+  if (action.input === 'files') return `上传多个文件（${action.accept || '任意类型'}）`;
+  return action.input || '无';
+}
+
+function apiParamSample(p) {
+  if (p.type === 'number') {
+    const n = Number(p.default);
+    return (p.default !== undefined && p.default !== '' && isFinite(n)) ? n : 0;
+  }
+  if (p.default !== undefined && p.default !== '') return p.default;
+  if (p.type === 'select') {
+    const first = (p.options || [])[0];
+    return first ? String(first.value !== undefined ? first.value : first) : '...';
+  }
+  return '...';
+}
+
+function curlSample(pid, action) {
+  const lines = [`curl -X POST "${location.origin}/api/plugins/${pid}/run/${action.id}"`];
+  if (action.input === 'file' || action.input === 'files') {
+    const ext = ((action.accept || '').split(',')[0] || '.bin').replace('.', '');
+    lines.push(`  -F "files=@示例文件.${ext}"`);
+    if (action.input === 'files') lines.push(`  -F "files=@示例文件2.${ext}"`);
+  }
+  const required = (action.params || []).filter(p => p.required);
+  if (required.length) {
+    const obj = {};
+    for (const p of required) obj[p.name] = apiParamSample(p);
+    lines.push(`  -F 'params=${JSON.stringify(obj)}'`);
+  }
+  return lines.join(' \\\n');
+}
+
+function renderApiDoc(plugins) {
+  const base = location.origin;
+  const row = (method, path, desc) => `
+    <div class="api-endpoint">
+      <span class="method ${method}">${method}</span>
+      <span class="api-path">${esc(path)}</span>
+      <span class="api-desc">${desc}</span>
+    </div>`;
+
+  // —— 通用约定 ——
+  let html = `<div class="api-sec">
+    <h3>通用约定</h3>
+    <div class="api-sub">
+      Base URL：<span class="api-base">${esc(base)}</span> · 服务只监听 127.0.0.1，所有处理都在本机完成，不上传任何第三方服务器<br>
+      · 响应统一为 JSON：<span class="api-path">{"success": true, ...}</span>；失败为 <span class="api-path">{"success": false, "error": "原因"}</span>，HTTP 状态码 4xx / 5xx<br>
+      · 执行接口会阻塞到任务完成才返回；执行期间可凭自带的 task_id 轮询进度（不关心进度可不传 task_id）<br>
+      · <b>下载即焚</b>：GET 结果文件在响应发送完成后立即删除服务端副本，链接是一次性的；始终没被取走的文件 30 分钟后由后台兜底清理
+    </div>
+  </div>`;
+
+  // —— 通用接口 ——
+  html += `<div class="api-sec">
+    <h3>通用接口</h3>
+    ${row('GET', '/api/plugins', '插件与动作清单（含每个动作的参数声明，本文档即由它生成）')}
+    ${row('POST', '/api/plugins/{pid}/run/{aid}', '执行动作（multipart/form-data，字段见下）')}
+    ${row('GET', '/api/progress/{task_id}', '查询执行进度，返回 {"progress": {"percent": 0-100, "message": "..."}} 或 null')}
+    ${row('GET', '/downloads/{name}', '下载结果文件（一次性，取走即焚）')}
+    ${row('DELETE', '/downloads/{name}', '主动丢弃结果文件（放弃未下载的结果时用）')}
+    ${row('POST', '/api/login/{pid}/start', '生成扫码登录二维码（base64 dataURL），仅声明了扫码登录的插件可用')}
+    ${row('GET', '/api/login/{pid}/poll', '轮询扫码状态：waiting / scanned / confirmed / expired / refresh / error')}
+    ${row('GET', '/api/deps', '各插件依赖与大组件安装状态')}
+    ${row('POST', '/api/setup/*', '依赖的安装 / 卸载（pip-install、pip-uninstall、asset-install、asset-uninstall、uninstall-all）')}
+  </div>`;
+
+  // —— 执行动作详解 ——
+  html += `<div class="api-sec">
+    <h3>执行动作：POST /api/plugins/{pid}/run/{aid}</h3>
+    <div class="api-sub">multipart/form-data 编码，三个字段均可按需省略：</div>
+    <table class="api-table">
+      <tr><th style="width:18%">字段</th><th style="width:16%">类型</th><th>说明</th></tr>
+      <tr><td>files</td><td>file，可重复</td><td>上传文件；动作声明 input 为 file / files 时必填，files 动作可重复该字段传多个</td></tr>
+      <tr><td>params</td><td>JSON 字符串</td><td>动作参数，键名见各动作的参数表；可整体省略（全部取默认值）</td></tr>
+      <tr><td>task_id</td><td>文本，可选</td><td>8~32 位十六进制任务标识；不传则服务端自动生成（此时无法轮询进度）</td></tr>
+    </table>
+    <div class="api-sub" style="margin-top:10px">响应示例（files 数组每项含 name / url / size 及动作附加信息如 start、end、kind）：</div>
+    <div class="api-code">{
+  "success": true,
+  "files": [
+    { "name": "结果.mp4", "url": "/downloads/3fa9c2d1_结果.mp4", "size": 10485760 }
+  ]
+}<span class="copy-tip">已复制</span></div>
+    <div class="api-sub">进度轮询与下载（-OJ 按响应头里的原始文件名保存）：</div>
+    <div class="api-code">curl "${esc(base)}/api/progress/{task_id}"
+curl -OJ "${esc(base)}/downloads/{name}"<span class="copy-tip">已复制</span></div>
+  </div>`;
+
+  // —— 各插件动作 ——
+  for (const p of plugins) {
+    const loginBadge = p.login ? '<span class="api-badge">支持扫码登录</span>' : '';
+    const actionBlocks = (p.actions || []).map(a => {
+      const params = a.params || [];
+      const paramRows = params.map(pp => {
+        const desc = [
+          pp.label || '',
+          pp.type === 'select' ? '选项：' + (pp.options || []).map(o => (o && o.label !== undefined) ? o.label : o).join(' / ') : '',
+          pp.hint || '',
+        ].filter(Boolean).map(esc).join('；');
+        const requiredMark = pp.required ? '<span class="req">必填</span>' : '<span style="color:var(--muted)">可选</span>';
+        const defaultText = (pp.default !== undefined && pp.default !== '') ? esc(String(pp.default)) : '—';
+        return `<tr>
+          <td>${esc(pp.name)}</td>
+          <td>${PARAM_TYPE_TEXT[pp.type] || esc(pp.type || '—')}</td>
+          <td>${requiredMark}</td>
+          <td>${defaultText}</td>
+          <td>${desc}</td>
+        </tr>`;
+      }).join('');
+      return `<div style="margin-top:14px">
+        <div style="font-size:13px"><b>${esc(a.name)}</b>
+          <span class="api-path">${esc(p.id)}/run/${esc(a.id)}</span></div>
+        <div class="api-desc" style="margin:2px 0 4px">${esc(a.description || '')} · 输入：${esc(apiInputDesc(a))}</div>
+        ${paramRows ? `<table class="api-table">
+          <tr><th style="width:18%">参数</th><th style="width:12%">类型</th><th style="width:10%">必填</th><th style="width:14%">默认</th><th>说明</th></tr>
+          ${paramRows}
+        </table>` : ''}
+        <div class="api-code">${esc(curlSample(p.id, a))}<span class="copy-tip">已复制</span></div>
+      </div>`;
+    }).join('');
+    const loginBlock = p.login ? `
+      <div class="api-sub" style="margin-top:10px">扫码登录（先 start 拿二维码图片，再轮询 poll 直到 confirmed）：</div>
+      <div class="api-code">curl -X POST "${esc(base)}/api/login/${esc(p.id)}/start"
+curl "${esc(base)}/api/login/${esc(p.id)}/poll"<span class="copy-tip">已复制</span></div>` : '';
+    html += `<div class="api-sec">
+      <h3>${esc(p.icon || '🧰')} ${esc(p.name)}<span class="api-base">${esc(p.id)}</span>${loginBadge}</h3>
+      <div class="api-sub">${esc(p.description || '')}</div>
+      ${actionBlocks}
+      ${loginBlock}
+    </div>`;
+  }
+  $('#apiDoc').innerHTML = html;
+}
+
+async function loadApiDoc() {
+  const list = $('#apiDoc');
+  list.innerHTML = '<div class="empty">加载中…</div>';
+  try {
+    const res = await fetch('/api/plugins');
+    const data = await res.json();
+    renderApiDoc(data.plugins || []);
+  } catch (e) {
+    list.innerHTML = `<div class="empty">加载失败：${esc(e.message)}</div>`;
+  }
+}
+
+function openApiDoc() {
+  if (apiOpen) { closeApiDoc(); return; }
+  apiOpen = true;
+  $('#viewHome').style.display = 'none';
+  $('#viewApi').style.display = 'block';
+  $('#btnBack').style.display = 'block';
+  loadApiDoc();
+}
+
+function closeApiDoc() {
+  apiOpen = false;
+  $('#viewApi').style.display = 'none';
+}
+
+// 点击代码块即复制（clone 去掉角标提示后取纯文本，避免把「已复制」一起复制）
+$('#apiDoc').addEventListener('click', async e => {
+  const code = e.target.closest('.api-code');
+  if (!code) return;
+  const clone = code.cloneNode(true);
+  const tip = clone.querySelector('.copy-tip');
+  if (tip) tip.remove();
+  try { await navigator.clipboard.writeText(clone.textContent.trim()); } catch (err) { return; }
+  code.classList.add('copied');
+  setTimeout(() => code.classList.remove('copied'), 1200);
+});
+
+$('#btnApiDoc').addEventListener('click', openApiDoc);
+$('#btnApiRefresh').addEventListener('click', loadApiDoc);
+
 /* ============ 设置页：依赖管理（/api/deps + /api/setup/*） ============
  * 数据由后端 deps.py 汇总（只读，不加载插件代码）；
  * 安装/卸载走 /api/setup/*，后台线程执行，进度复用 /api/progress/{op_id} 轮询。 */
@@ -817,7 +1125,15 @@ function fmtSize(n) {
 
 async function openSettings() {
   if (settingsOpen) { closeSettings(); return; }
-  settingsReturnView = ($('#viewTool').style.display !== 'none' && current) ? 'tool' : 'home';
+  // 以 viewApi 实际显示状态为准（DOM 是唯一真相源，apiOpen 仅用于按钮 toggle 判定）
+  const apiWasOpen = $('#viewApi').style.display !== 'none';
+  // 记录「从哪个视图进入设置」，关闭时回到原视图（viewTool / viewApi 优先于 home）
+  settingsReturnView = ($('#viewTool').style.display !== 'none' && current) ? 'tool'
+                     : apiWasOpen ? 'api'
+                     : 'home';
+  // API 文档页打开时点设置：先关掉 viewApi，否则两个视图同时显示造成内容叠加
+  // （viewApi 在 viewSettings 之后的兄弟节点，会盖在设置页上方）
+  if (apiWasOpen) { apiOpen = false; $('#viewApi').style.display = 'none'; }
   settingsOpen = true;
   $('#viewHome').style.display = 'none';
   $('#viewTool').style.display = 'none';
@@ -831,6 +1147,8 @@ function closeSettings() {
   $('#viewSettings').style.display = 'none';
   $('#btnSettings').classList.remove('active');
   if (settingsReturnView === 'tool' && current) $('#viewTool').style.display = 'block';
+  // 同步 apiOpen 与 viewApi 的显示，否则下次点 API 文档按钮的 toggle 会失效
+  else if (settingsReturnView === 'api') { apiOpen = true; $('#viewApi').style.display = 'block'; }
   else $('#viewHome').style.display = 'block';
 }
 
@@ -851,7 +1169,9 @@ function renderDeps(groups) {
   const list = $('#depsList');
   if (!groups.length) { list.innerHTML = '<div class="empty">没有可展示的插件</div>'; return; }
   list.innerHTML = groups.map(g => {
-    const badPkgs = (g.packages || []).filter(p => p.state !== 'ok');
+    // 可选组依赖（requirements-*.txt，如转写用的重依赖）不计入「未就绪」：
+    // 缺着只影响个别动作，不该让整个插件看起来像坏的
+    const badPkgs = (g.packages || []).filter(p => p.state !== 'ok' && !p.optional);
     const badge = badPkgs.length
       ? `<span class="dep-badge miss">${badPkgs.length} 个依赖未就绪</span>`
       : '<span class="dep-badge ok">依赖就绪</span>';
@@ -861,33 +1181,42 @@ function renderDeps(groups) {
                  : p.state === 'missing' ? (p.spec ? `未安装（要求 ${p.spec}）` : '未安装')
                  : `已装 ${p.installed}，要求 ${p.spec}`;
       const ops = [];
-      if (p.state !== 'ok') ops.push(`<button class="btn-mini" onclick="installPkg('${g.id}','${p.name}')">${p.state === 'outdated' ? '升级' : '安装'}</button>`);
-      if (p.state !== 'missing') ops.push(`<button class="btn-mini" onclick="uninstallPkg('${g.id}','${p.name}')">卸载</button>`);
+      if (p.state !== 'ok') ops.push(`<button class="btn-mini" onclick="installPkg('${g.id}','${esc(p.name)}')">${p.state === 'outdated' ? '升级' : '安装'}</button>`);
+      if (p.state !== 'missing') ops.push(`<button class="btn-mini danger" onclick="uninstallPkg('${g.id}','${esc(p.name)}')">卸载</button>`);
       return `<tr>
-        <td class="d-item">${p.name} <span class="dep-badge ${stateCls}">${PKG_STATE_TEXT[p.state] || p.state}</span></td>
+        <td class="d-item">${esc(p.name)}${p.optional ? ' <span style="color:var(--muted);font-size:11px">（可选）</span>' : ''} <span class="dep-badge ${stateCls}">${PKG_STATE_TEXT[p.state] || p.state}</span></td>
         <td class="d-info">${info}</td>
         <td class="d-op">${ops.join('')}</td>
       </tr>`;
     }).join('');
     const assetRows = (g.assets || []).map(a => {
       const stateCls = a.state === 'ok' ? 'ok' : 'miss';
-      const sizeText = (a.state === 'ok' || a.state === 'partial') ? fmtSize(a.size) : (a.size_hint || '');
+      // 已装显示实际占用（不加「约」），未装显示预估体积（hint 已归一化，统一加「约」）
+      const hasSize = (a.state === 'ok' || a.state === 'partial') && a.size;
+      const sizeText = hasSize ? fmtSize(a.size) : (a.size_hint || '');
+      const sizeLabel = sizeText ? (hasSize ? sizeText : '约 ' + sizeText) : '';
       const typeLabel = a.type === 'playwright' ? '浏览器组件' : a.type === 'modelscope' ? 'AI 模型' : (a.type || '组件');
       const ops = [];
-      if (a.state !== 'ok') ops.push(`<button class="btn-mini" onclick="installAsset('${g.id}','${a.id}')">${a.state === 'partial' ? '续装' : '安装'}</button>`);
-      if (a.state !== 'missing') ops.push(`<button class="btn-mini" onclick="uninstallAsset('${g.id}','${a.id}')">卸载</button>`);
+      if (a.state !== 'ok') ops.push(`<button class="btn-mini" onclick="installAsset('${g.id}','${esc(a.id)}')">${a.state === 'partial' ? '续装' : '安装'}</button>`);
+      if (a.state !== 'missing') ops.push(`<button class="btn-mini danger" onclick="uninstallAsset('${g.id}','${esc(a.id)}')">卸载</button>`);
       return `<tr>
-        <td class="d-item">${a.name || a.id} <span class="dep-badge ${stateCls}">${ASSET_STATE_TEXT[a.state] || a.state}</span></td>
-        <td class="d-info">${[typeLabel, a.description, sizeText ? '约 ' + sizeText : ''].filter(Boolean).join(' · ')}</td>
+        <td class="d-item">${esc(a.name || a.id)} <span class="dep-badge ${stateCls}">${ASSET_STATE_TEXT[a.state] || a.state}</span></td>
+        <td class="d-info">${[typeLabel, a.description, sizeLabel].filter(Boolean).map(esc).join(' · ')}</td>
         <td class="d-op">${ops.join('')}</td>
       </tr>`;
     }).join('');
     const groupOp = badPkgs.length
       ? `<div class="dep-actions"><button class="btn-mini" onclick="installAllPkgs('${g.id}')">⬇ 一键安装缺失依赖（${badPkgs.length}）</button></div>`
       : '';
+    // 一键卸载：有任一已装的 pip 包或大组件时才提供
+    const installedPkgs = (g.packages || []).filter(p => p.state !== 'missing' && p.installed);
+    const installedAssets = (g.assets || []).filter(a => a.state !== 'missing');
+    const headUninstall = (installedPkgs.length + installedAssets.length)
+      ? `<button class="btn-mini danger btn-uninstall-all" onclick="uninstallAll('${g.id}')">🗑️ 一键卸载</button>`
+      : '';
     return `<div class="dep-group">
-      <div class="dep-head"><span>${g.icon || '🧰'}</span><span class="d-name">${g.name}</span>${badge}</div>
-      ${g.description ? `<div class="dep-desc">${g.description}</div>` : ''}
+      <div class="dep-head"><span>${esc(g.icon || '🧰')}</span><span class="d-name">${esc(g.name)}</span>${badge}${headUninstall}</div>
+      ${g.description ? `<div class="dep-desc">${esc(g.description)}</div>` : ''}
       ${(pkgRows || assetRows) ? `<table class="dep-table">${pkgRows}${assetRows}</table>` : '<div class="dep-desc">无外部依赖</div>'}
       ${groupOp}
     </div>`;
@@ -918,12 +1247,26 @@ async function runSetup(url, body, title) {
   const mask = $('#progressMask');
   mask.style.display = 'flex';
   requestAnimationFrame(() => mask.classList.add('show'));
+  let nullPolls = 0;  // 连续拿不到进度条目的次数（见轮询里的兜底）
   setupTimer = setInterval(async () => {
     try {
       const r = await fetch(`/api/progress/${d.op_id}`);
       const data = await r.json();
       const p = data.progress;
-      if (!p) return;
+      if (!p) {
+        // 进度条目不存在：要么操作已结束被覆盖清理（短暂窗口），要么服务重启丢失。
+        // 连续多次拿不到就按失败收场，避免弹窗与 setupBusy 永久卡死
+        nullPolls++;
+        if (nullPolls >= 10) {
+          clearInterval(setupTimer); setupTimer = null;
+          mask.classList.remove('show');
+          setTimeout(() => { mask.style.display = 'none'; }, 180);
+          setupBusy = false; setSettingsBusy(false);
+          showSettingsError('操作进度丢失（服务可能已重启），请刷新页面后重试');
+        }
+        return;
+      }
+      nullPolls = 0;
       if (p.percent != null) { $('#pgBar').style.width = p.percent + '%'; $('#pgPct').textContent = p.percent + '%'; }
       if (p.message) $('#pgMsg').textContent = p.message;
       if (p.done) {
@@ -978,6 +1321,22 @@ async function uninstallAsset(pid, assetId) {
     okText: '移除',
   });
   if (ok) await runSetup('/api/setup/asset-uninstall', { pid, asset_id: assetId }, `移除 ${name}`);
+}
+
+async function uninstallAll(pid) {
+  const g = depsCache.find(x => x.id === pid);
+  if (!g) return;
+  const pkgs = (g.packages || []).filter(p => p.state !== 'missing' && p.installed);
+  const assets = (g.assets || []).filter(a => a.state !== 'missing');
+  const lines = [];
+  if (pkgs.length) lines.push(`Python 包 ${pkgs.length} 个：${pkgs.map(p => p.name).join('、')}`);
+  if (assets.length) lines.push(`大组件 ${assets.length} 个：${assets.map(a => a.name || a.id).join('、')}`);
+  const ok = await showConfirm({
+    icon: '🗑️', title: `一键卸载 ${g.name}`,
+    message: `将卸载该工具已安装的全部依赖：\n${lines.join('\n')}\n\n其他工具共用这些依赖时也会受影响（下次使用时会自动重装）。`,
+    okText: '全部卸载',
+  });
+  if (ok) await runSetup('/api/setup/uninstall-all', { pid }, `一键卸载 ${g.name}`);
 }
 
 $('#btnSettings').addEventListener('click', openSettings);

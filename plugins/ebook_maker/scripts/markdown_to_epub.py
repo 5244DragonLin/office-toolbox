@@ -24,6 +24,8 @@ import urllib.parse
 from ebooklib import epub
 from markdown import markdown
 
+from cn_num import chinese_to_arabic as _chinese_to_arabic  # 中文数字转换（与同目录其他脚本共享）
+
 
 def is_url(path):
     """判断路径是否为 URL"""
@@ -119,13 +121,7 @@ def convert_md_to_epub(md_file, output_file, cover_file=None,
     with open(md_file, 'r', encoding='utf-8') as f:
         md_content = f.read()
 
-    # ---- 第一步：扫描所有标题，记录位置 ----
-    # 匹配 # (一级标题/卷) 和 ## (二级标题/章)
-    all_headers = re.findall(
-        r'^(#{1,2})\s+(.+)$', md_content, re.MULTILINE
-    )
-
-    # ---- 第二步：建立层级结构 ----
+    # ---- 建立层级结构 ----
     # 结构: 每一卷是一个 EpubHtml 页面，包含一组子章节
     # 对于没有一级标题的书，所有二级标题都属于"无卷"
     volumes = []  # [(卷标题, [章节列表])]
@@ -133,6 +129,7 @@ def convert_md_to_epub(md_file, output_file, cover_file=None,
 
     # 按顺序逐段解析
     lines = md_content.split('\n')
+    current_chapter_list = None  # 当前卷的章节列表；文件以 ## 开头时先建一个「无卷」组
     i = 0
     while i < len(lines):
         line = lines[i].strip()
@@ -178,8 +175,8 @@ def convert_md_to_epub(md_file, output_file, cover_file=None,
             # 二级标题：这是一章
             chap_title = line[3:].strip()
 
-            # 确保 current_chapter_list 已定义（文件开头可能先遇到 ## 标题）
-            if 'current_chapter_list' not in dir():
+            # 文件以 ## 开头（先遇到章后遇到卷）：先建一个「无卷」组承接这些章
+            if current_chapter_list is None:
                 current_chapter_list = []
                 volumes.append(('', current_chapter_list))
 
@@ -241,7 +238,7 @@ def convert_md_to_epub(md_file, output_file, cover_file=None,
 
     # 如果没有一级标题（卷），将所有章节合并为一个"无卷"组
     if not volumes:
-        volumes = [('', current_chapter_list)]
+        volumes = [('', current_chapter_list or [])]
 
     # ---- 章节连续性检查 ----
     if not no_check:
@@ -286,31 +283,7 @@ def convert_md_to_epub(md_file, output_file, cover_file=None,
     return True
 
 
-# 中文数字映射
-_CN_DIGIT = {"零": 0, "一": 1, "二": 2, "三": 3, "四": 4, "五": 5, "六": 6, "七": 7, "八": 8, "九": 9}
-_CN_UNIT = {"十": 10, "百": 100, "千": 1000}
-
-def _chinese_to_arabic(cn_str):
-    """中文数字转阿拉伯数字"""
-    if not cn_str:
-        return None
-    if cn_str.isdigit():
-        return int(cn_str)
-    cn_str = cn_str.lstrip("零")
-    if not cn_str:
-        return 0
-    total = 0
-    current = 0
-    for ch in cn_str:
-        if ch in _CN_DIGIT:
-            current = _CN_DIGIT[ch]
-        elif ch in _CN_UNIT:
-            if current == 0:
-                current = 1
-            total += current * _CN_UNIT[ch]
-            current = 0
-    total += current
-    return total
+# 中文数字转换已统一到 cn_num 模块（见文件顶部 import）
 
 _CHAPTER_PATTERN = re.compile(r'第\s*([零一二三四五六七八九十百千\d]+)\s*章')
 

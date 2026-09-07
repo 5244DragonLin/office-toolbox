@@ -3,6 +3,7 @@
   "name": "B站下载",
   "version": "0.7.0",
   "description": "下载 B站视频/收藏夹/合集/UP主投稿，提取音频与字幕，支持扫码登录，实时下载进度",
+  "login": true,
   "icon": "📺",
   "actions": [
     {
