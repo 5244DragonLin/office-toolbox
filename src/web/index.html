@@ -44,9 +44,30 @@
   .field label { display: block; font-size: 13px; margin-bottom: 6px; font-weight: 500; }
   .field input[type=text], .field input[type=number], .field select { width: 100%; padding: 9px 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 14px; background: #fff; }
   .field input:focus, .field select:focus { outline: none; border-color: var(--accent); }
+  /* 多行文本参数（内容简介）：与单行输入框同宽同风格，只多几行高度 */
+  .field textarea { width: 100%; padding: 9px 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 14px; background: #fff; font-family: inherit; line-height: 1.6; resize: vertical; box-sizing: border-box; }
+  .field textarea:focus { outline: none; border-color: var(--accent); }
   .drop { border: 2px dashed var(--border); border-radius: 10px; padding: 26px; text-align: center; color: var(--muted); font-size: 13px; cursor: pointer; transition: all .15s; }
   .drop:hover, .drop.drag { border-color: var(--accent); background: var(--accent-bg); }
   .drop .file-list { margin-top: 10px; text-align: left; color: var(--text); }
+/* 文件型参数（如电子书封面）：比主文件区更紧凑，选中后就地预览文件名 */
+.drop.param-drop { min-height: 83px; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 16px 18px; border-radius: 9px; font-size: 12.5px; line-height: 1.5; }
+.drop.param-drop .pd-file { color: var(--text); display: flex; align-items: center; justify-content: center; gap: 12px; font-size: 12.5px; max-width: 100%; }
+.drop.param-drop .pd-thumb { width: 34px; height: 34px; object-fit: cover; border-radius: 5px; border: 1px solid var(--border); flex-shrink: 0; }
+.drop.param-drop .pd-ico { font-size: 20px; flex-shrink: 0; }
+.drop.param-drop .pd-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 380px; }
+.drop.param-drop .f-remove { margin-left: 6px; flex-shrink: 0; padding: 3px 9px; border-radius: 999px; background: #fdecea; font-size: 12px; line-height: 1.4; }
+.drop.param-drop .f-remove:hover { text-decoration: none; background: #f8d5cf; }
+.drop.param-drop .pd-hint { font-size: 11.5px; color: var(--muted); margin-top: 8px; }
+.drop.param-drop .pd-url { margin-top: 10px; }
+.drop.param-drop .pd-url input { width: 100%; padding: 8px 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 13px; background: #fff; }
+.drop.param-drop .pd-url input:focus { outline: none; border-color: var(--accent); }
+  /* 豆瓣元数据填充条：置顶在参数区，突出但不抢主流程 */
+  .db-bar { background: var(--accent-bg); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; }
+  .db-bar .db-row { display: flex; gap: 10px; align-items: center; }
+  .db-bar .db-row input { flex: 1; min-width: 0; }
+  .db-bar .db-row .btn { margin-top: 0; white-space: nowrap; flex-shrink: 0; }
+  .db-bar #dbMsg { min-height: 1px; color: var(--muted); }
   .drop .file-list div { font-size: 12px; padding: 2px 0; }
   .f-remove { cursor: pointer; color: #c0392b; margin-left: 8px; font-weight: 600; user-select: none; }
   .f-remove:hover { text-decoration: underline; }
@@ -145,7 +166,21 @@
   .api-table td:first-child { font-family: Consolas, Menlo, monospace; }
   .req { color: #c0392b; font-size: 11px; }
   .api-badge { display: inline-block; font-size: 11px; padding: 1px 8px; border-radius: 99px; background: var(--accent-bg); color: var(--accent); margin-left: 8px; }
-  @media (max-width: 760px) { .tool-layout { flex-direction: column; } .tool-side { width: 100%; } .dep-table td.d-item { width: 180px; } }
+  .api-layout { display: flex; gap: 20px; align-items: flex-start; }
+  .api-side { width: 232px; flex-shrink: 0; background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; position: sticky; top: 16px; max-height: calc(100vh - 32px); overflow-y: auto; }
+  .api-side .a-title { padding: 9px 16px; font-size: 11px; font-weight: 600; letter-spacing: .6px; color: var(--muted); background: #fafbfc; border-bottom: 1px solid var(--border); }
+  .api-side .a-item { padding: 9px 16px; cursor: pointer; font-size: 13px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 8px; line-height: 1.4; }
+  .api-side .a-item:last-child { border-bottom: none; }
+  .api-side .a-item:hover { background: var(--accent-bg); }
+  .api-side .a-item.active { background: var(--accent-bg); color: var(--accent); font-weight: 600; position: relative; }
+  .api-side .a-item.active::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--accent); }
+  .api-side .a-item .a-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .api-side .a-item .a-count { flex-shrink: 0; font-size: 11px; color: var(--muted); font-weight: 400; }
+  .api-side .a-item.active .a-count { color: var(--accent); }
+  .api-main { flex: 1; min-width: 0; }
+  /* 锚点跳转时留一点上边距，标题不至于贴到窗口边缘 */
+  .api-sec { scroll-margin-top: 16px; }
+  @media (max-width: 760px) { .tool-layout { flex-direction: column; } .tool-side { width: 100%; } .dep-table td.d-item { width: 180px; } .api-layout { flex-direction: column; } .api-side { width: 100%; position: static; max-height: none; } }
 </style>
 </head>
 <body>
@@ -216,7 +251,10 @@
     </div>
     <button class="btn-mini" id="btnApiRefresh">↻ 刷新</button>
   </div>
-  <div id="apiDoc"></div>
+  <div class="api-layout">
+    <div class="api-side" id="apiSide"></div>
+    <div class="api-main" id="apiDoc"></div>
+  </div>
 </div>
 
 <div class="modal-mask" id="progressMask" style="display:none">
@@ -254,8 +292,19 @@ const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c =>
   ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 let plugins = [], current = null, currentAction = null, selectedFiles = [];
+// 文件型参数（manifest 声明 type:"file"，如电子书封面）已选文件：参数名 -> File
+let paramFiles = {};
 // 已转换但尚未下载的结果文件（返回首页时若存在则提示并清理，对所有工具生效）
 let pendingFiles = [];
+
+// 首页视图：CSS 里 #viewHome 是 display:flex（配合 .home-footer 的 margin-top:auto 把
+// API 按钮贴到底部）。用 JS 显隐时必须还原成 flex——写成 block 会退化成普通块，
+// 底部按钮就会跑到卡片墙正下方。所有回首页的地方统一走这里。
+function showHome() {
+  $('#viewHome').style.display = 'flex';
+  $('#viewTool').style.display = 'none';
+  $('#btnBack').style.display = 'none';
+}
 
 async function load() {
   const res = await fetch('/api/plugins');
@@ -304,6 +353,7 @@ function openPlugin(pid) {
 function selectAction(aid) {
   currentAction = current.actions.find(a => a.id === aid);
   selectedFiles = [];
+  paramFiles = {};   // 切换动作时丢弃上一个动作已选的文件型参数
   const items = document.querySelectorAll('#actionList .t-item');
   items.forEach(el => el.classList.remove('active'));
   const idx = current.actions.findIndex(a => a.id === aid);
@@ -338,7 +388,94 @@ function renderParamControl(p) {
     }).join('');
     return `<select id="${id}">${opts}</select>`;
   }
+  if (p.type === 'file') {
+    // 文件型参数（如电子书封面）：单独一块拖拽区，选中后就近预览文件名；
+    // allowUrl：插件支持网络图片时，额外给一个链接输入框（两者二选一，文件优先）。
+    // 格式限制不塞进拖拽区（会把框撞高、显得拥挤），单独一行小字说明
+    const acceptHint = p.accept
+      ? `<div class="pd-hint">支持格式：${esc(p.accept.split(',').map(s => s.trim().replace(/^\./, '')).join(' / '))}</div>` : '';
+    const urlBox = p.allowUrl ? `
+      <div class="pd-url"><input type="text" id="${id}_url" placeholder="${esc(p.urlPlaceholder || '或粘贴 http(s) 图片链接')}"></div>` : '';
+    return `<div class="param-file-wrap">
+      <div class="drop drop-sm param-drop" id="${id}" data-param="${esc(p.name)}" data-accept="${esc(p.accept || '')}">
+        <div class="pd-text">点击或拖拽图片到此处</div>
+        <div class="pd-file" style="display:none"></div>
+      </div>${acceptHint}${urlBox}
+    </div>`;
+  }
+  // 「内容简介」这类长文本用多行输入框（rows 由 manifest 指定），
+  // 输入与展示都更贴近实际用途
+  if (p.type === 'text' && p.rows) {
+    return `<textarea id="${id}" rows="${esc(String(p.rows))}" placeholder="${esc(p.placeholder || '')}">${esc(p.default || '')}</textarea>`;
+  }
   return `<input type="${p.type === 'number' ? 'number' : 'text'}" id="${id}" placeholder="${esc(p.placeholder || '')}" value="${esc(p.default || '')}">`;
+}
+
+/* 豆瓣元数据自动填充：请求 /api/douban/book，把结果写进同名参数控件
+   （带 rows 的文本参数用多行控件，其余文本/数字用 input）。
+   封面 dataUrl 还原成 File 塞进封面文件槽；没有文件槽时退化成往 URL 输入框填值。 */
+async function fillFromDouban(url) {
+  const btn = $('#dbFill');
+  const msg = $('#dbMsg');
+  const setMsg = (t, ok) => {
+    if (!msg) return;
+    msg.textContent = t;
+    msg.style.color = ok === false ? '#c0392b' : '';
+  };
+  if (!url || !url.trim()) { setMsg('请先粘贴豆瓣书籍链接', false); return; }
+  btn.disabled = true; const old = btn.textContent; btn.textContent = '抓取中…';
+  setMsg('正在从豆瓣抓取…');
+  try {
+    const res = await fetch('/api/douban/book?url=' + encodeURIComponent(url.trim()));
+    const data = await res.json();
+    if (!data.success) { setMsg(data.error || '抓取失败', false); return; }
+    const b = data.book || {};
+    const filled = [];
+    // 键名 → 中文标签（状态提示直接给用户看，不暴露内部参数名）
+    const fields = { title: ['书名', b.title], author: ['作者', b.author],
+                     publisher: ['出版社', b.publisher], isbn: ['ISBN', b.isbn],
+                     date: ['出版日期', b.date], description: ['简介', b.description] };
+    for (const [name, [label, value]] of Object.entries(fields)) {
+      if (!value) continue;
+      const el = $(`#param_${name}`);
+      if (!el) continue;
+      el.value = value;
+      filled.push(label);
+    }
+    // 封面：下载好的图片 dataURL 还原成 File，直接占住封面文件槽
+    let coverNote = '';
+    if (b.cover && b.cover.dataUrl) {
+      const coverParam = (currentAction.params || []).find(p => p.type === 'file' && p.name === 'cover');
+      if (coverParam) {
+        try {
+          const blob = await (await fetch(b.cover.dataUrl)).blob();
+          setParamFile(coverParam, new File([blob], b.cover.name || 'cover.jpg', { type: blob.type }));
+          filled.push('封面');
+        } catch (e) { coverNote = '（封面下载失败，请手动选择）'; }
+      } else {
+        const urlEl = $('#param_cover_url');
+        if (urlEl) { urlEl.value = b.cover.dataUrl; filled.push('封面'); }
+      }
+    } else if (b.cover_failed) {
+      // 页面有封面但豆瓣图库本次拉不下来：明说，避免用户以为这本书没封面
+      coverNote = '（封面图未能下载，请手动上传或稍后重试）';
+    }
+    const tail = filled.length ? `✓ 已填充：${filled.join('、')}${coverNote ? ' ' + coverNote : ''}`
+                               : (b.title ? '豆瓣页面没有可用字段' : '未取到数据');
+    setMsg(tail, filled.length > 0 && !b.cover_failed);
+  } catch (e) {
+    setMsg('请求失败：' + e.message, false);
+  } finally {
+    btn.disabled = false; btn.textContent = old;
+  }
+}
+
+function bindDoubanBar() {
+  const btn = $('#dbFill');
+  if (!btn) return;
+  btn.addEventListener('click', () => fillFromDouban($('#dbUrl') ? $('#dbUrl').value : ''));
+  const urlEl = $('#dbUrl');
+  if (urlEl) urlEl.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); btn.click(); } });
 }
 
 function renderParams() {
@@ -346,12 +483,30 @@ function renderParams() {
   const params = currentAction.params || [];
   if (!params.length) { box.innerHTML = ''; $('#tipLine').textContent = ''; return; }
   const heading = '参数';
-  box.innerHTML = `<div class="field"><label>${heading}</label></div>` + params.map(p => `
+  // 带豆瓣链接入口的动作（manifest 声明 douban:true）：参数区顶部给一条
+  // 「豆瓣链接 → 自动填充」工具条，省得手输书名/作者/出版社/ISBN/简介。
+  const doubanBar = (currentAction.douban && params.some(p => p.name === 'title')) ? `
+    <div class="field db-bar">
+      <label>📚 从豆瓣链接填充</label>
+      <div class="db-row">
+        <input type="text" id="dbUrl" placeholder="粘贴豆瓣书籍链接，如 https://book.douban.com/subject/35114602/">
+        <button class="btn btn-sm" id="dbFill" type="button">自动填充</button>
+      </div>
+      <div class="check" id="dbMsg"></div>
+    </div>` : '';
+  box.innerHTML = doubanBar + `<div class="field"><label>${heading}</label></div>` + params.map(p => `
     <div class="field" data-param="${esc(p.name)}">
       <label>${esc(p.label)}${p.required ? ' <span style="color:#c0392b">*</span>' : ''}</label>
       ${renderParamControl(p)}
       ${p.hint ? `<div class="check">${esc(p.hint)}</div>` : ''}
     </div>`).join('');
+  // 文件型参数：动态生成一个真实 file input（accept 由 manifest 决定），
+  // 拖拽区负责收集/预览/移除，选中结果存入 paramFiles[name]
+  params.forEach(p => {
+    if (p.type !== 'file') return;
+    const zone = box.querySelector(`#param_${p.name}`);
+    if (zone) bindFileParam(zone, p);
+  });
   // 联动显隐：当某个 select 参数等于指定值时显示/隐藏本参数
   params.forEach(p => {
     if (!p.showWhen) return;
@@ -367,6 +522,7 @@ function renderParams() {
       update();
     });
   });
+  bindDoubanBar();
   $('#tipLine').textContent = params.length ? '带 * 的为必填项' : '';
   syncSkipButtons();
   const skipEl = $('#param_skip');
@@ -443,6 +599,98 @@ function addFiles(files) {
     selectedFiles.push(f);
   }
   renderSelectedFiles();
+}
+
+/* ============ 文件型参数（manifest 声明 type:"file"，如电子书封面） ============
+   拖拽区交互与主文件区一致：点击选文件、拖拽选择（含拖入文件夹）、可移除；
+   选中结果存进 paramFiles[参数名]，提交时作为与参数同名的表单字段上传。 */
+function paramAcceptList(accept) {
+  return (accept || '').split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
+}
+
+function renderParamFile(zone, p) {
+  const f = paramFiles[p.name];
+  const fileEl = zone.querySelector('.pd-file');
+  const textEl = zone.querySelector('.pd-text');
+  const old = zone.querySelector('.pd-thumb');
+  if (old && old.dataset.url) { URL.revokeObjectURL(old.dataset.url); }
+  if (f) {
+    // 图片给缩略图，非图片给文件图标；两者都占同样位置，避免行宽跳动
+    const isImg = /^image\//.test(f.type) || /\.(png|jpe?g|gif|webp|bmp)$/i.test(f.name);
+    let thumb = '<span class="pd-ico">📄</span>';
+    if (isImg) {
+      const url = URL.createObjectURL(f);
+      thumb = `<img class="pd-thumb" src="${url}" data-url="${url}" alt="">`;
+    }
+    fileEl.innerHTML = `${thumb}<span class="pd-name" title="${esc(f.name)}">${esc(f.name)}</span><span class="f-remove" title="移除该文件">✕ 删除</span>`;
+    fileEl.style.display = '';
+    textEl.style.display = 'none';
+  } else {
+    fileEl.innerHTML = '';
+    fileEl.style.display = 'none';
+    textEl.style.display = '';
+  }
+}
+
+function setParamFile(p, f) {
+  if (!f) return;
+  const accept = paramAcceptList(p.accept);
+  if (accept.length) {
+    const ext = '.' + f.name.split('.').pop().toLowerCase();
+    if (!accept.includes(ext) && !accept.includes('.*')) {
+      alert(`不支持的文件类型: ${f.name}（仅支持 ${p.accept}）`);
+      return;
+    }
+  }
+  paramFiles[p.name] = f;
+  // 文件与链接二选一：选了文件就清空链接框，避免两个来源同时存在
+  const urlEl = $(`#param_${p.name}_url`);
+  if (urlEl) urlEl.value = '';
+  const zone = $(`#param_${p.name}`);
+  if (zone) renderParamFile(zone, p);
+}
+
+function bindFileParam(zone, p) {
+  renderParamFile(zone, p);
+  const pick = () => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    if (p.accept) input.accept = p.accept;
+    input.onchange = () => { if (input.files[0]) setParamFile(p, input.files[0]); };
+    input.click();
+  };
+  zone.addEventListener('click', e => {
+    const rm = e.target.closest('.f-remove');
+    if (rm) { delete paramFiles[p.name]; renderParamFile(zone, p); return; }
+    pick();
+  });
+  // 链接输入框与文件互斥：开始输入链接就丢弃已选文件
+  const urlEl = $(`#param_${p.name}_url`);
+  if (urlEl) urlEl.addEventListener('input', () => {
+    if (!paramFiles[p.name]) return;
+    delete paramFiles[p.name];
+    renderParamFile(zone, p);
+  });
+  zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag'); });
+  zone.addEventListener('dragleave', () => zone.classList.remove('drag'));
+  zone.addEventListener('drop', async e => {
+    e.preventDefault(); e.stopPropagation();   // 不让事件冒到外层主文件区
+    zone.classList.remove('drag');
+    // 拖入文件夹时 dataTransfer.files 为空，需递归收集（entries 必须在 await 前取出）
+    const entries = [];
+    if (e.dataTransfer.items && e.dataTransfer.items.length && e.dataTransfer.items[0].webkitGetAsEntry) {
+      for (const item of e.dataTransfer.items) {
+        const en = item.webkitGetAsEntry();
+        if (en) entries.push(en);
+      }
+    }
+    if (entries.some(en => en.isDirectory)) {
+      const collected = [];
+      for (const en of entries) await walkEntry(en, collected);
+      if (collected.length) { setParamFile(p, collected[0]); return; }
+    }
+    if (e.dataTransfer.files.length) setParamFile(p, e.dataTransfer.files[0]);
+  });
 }
 
 /* ============ 音频预览（插件 manifest 的 action 声明 "preview": "audio" 时启用） ============ */
@@ -686,10 +934,15 @@ $('#btnRun').addEventListener('click', async () => {
   if (currentAction.ui === 'login') { openLoginDialog(); return; }
   if (currentAction.input !== 'text' && !selectedFiles.length) { alert('请先选择文件'); return; }
   for (const p of (currentAction.params || [])) {
-    if (p.required) {
-      const el = $(`#param_${p.name}`);
-      if (!el || !el.value.trim()) { alert(`请填写必填项：${p.label}`); return; }
+    if (!p.required) continue;
+    if (p.type === 'file') {
+      if (!paramFiles[p.name] && !($(`#param_${p.name}_url`) || {}).value) {
+        alert(`请选择文件：${p.label}`); return;
+      }
+      continue;
     }
+    const el = $(`#param_${p.name}`);
+    if (!el || !el.value.trim()) { alert(`请填写必填项：${p.label}`); return; }
   }
   btn.disabled = true; btn.textContent = '处理中…';
   $('#resultBox').innerHTML = ''; $('#errorBox') && $('#errorBox').remove();
@@ -697,7 +950,17 @@ $('#btnRun').addEventListener('click', async () => {
   selectedFiles.forEach(f => fd.append('files', f));
   const params = {};
   (currentAction.params || []).forEach(p => {
-    const v = $(`#param_${p.name}`).value.trim();
+    // 文件型参数：以「与参数同名的字段」上传，服务端落盘后写入 params[同名键]。
+    // 未选文件时退回链接输入框（allowUrl），让插件按 URL 处理
+    if (p.type === 'file') {
+      if (paramFiles[p.name]) { fd.append(p.name, paramFiles[p.name]); return; }
+      const urlEl = $(`#param_${p.name}_url`);
+      const urlVal = urlEl ? urlEl.value.trim() : '';
+      if (urlVal) params[p.name] = urlVal;
+      return;
+    }
+    const el = $(`#param_${p.name}`);
+    const v = el ? el.value.trim() : '';
     if (v !== '') params[p.name] = p.type === 'number' ? Number(v) : v;
   });
   fd.append('params', JSON.stringify(params));
@@ -891,9 +1154,7 @@ function goHome() {
   if (pendingFiles.length) {
     const n = pendingFiles.length;
     const doHome = () => {
-      $('#viewTool').style.display = 'none';
-      $('#viewHome').style.display = 'block';
-      $('#btnBack').style.display = 'none';
+      showHome();
       renderCards();
     };
     showConfirm({
@@ -913,8 +1174,7 @@ function goHome() {
     return;
   }
   $('#viewTool').style.display = 'none';
-  $('#viewHome').style.display = 'block';
-  $('#btnBack').style.display = 'none';
+  showHome();
   renderCards();
 }
 
@@ -927,7 +1187,7 @@ $('#logoHome').addEventListener('click', goHome);
  * 装了新插件刷新即见，无需维护第二份文档。 */
 let apiOpen = false;
 
-const PARAM_TYPE_TEXT = { text: '文本', number: '数字', select: '下拉' };
+const PARAM_TYPE_TEXT = { text: '文本', number: '数字', select: '下拉', file: '文件上传' };
 
 function apiInputDesc(action) {
   if (action.input === 'text') return '无需上传文件，参数中传文本（如链接）';
@@ -949,6 +1209,12 @@ function apiParamSample(p) {
   return '...';
 }
 
+/* 文件型参数取值示例：优先用 manifest 声明的 accept 首项编个文件名 */
+function apiFileSample(p) {
+  const ext = ((p.accept || '').split(',')[0] || '.jpg').replace('.', '');
+  return `示例${p.label || '文件'}.${ext}`;
+}
+
 function curlSample(pid, action) {
   const lines = [`curl -X POST "${location.origin}/api/plugins/${pid}/run/${action.id}"`];
   if (action.input === 'file' || action.input === 'files') {
@@ -957,12 +1223,64 @@ function curlSample(pid, action) {
     if (action.input === 'files') lines.push(`  -F "files=@示例文件2.${ext}"`);
   }
   const required = (action.params || []).filter(p => p.required);
-  if (required.length) {
+  // 文件型参数不进 params JSON：用「与参数同名的字段」上传（服务端落盘后写回 params）。
+  // 可选的文件型参数也示例一行为好——上传是它唯一的本地用法
+  for (const p of (action.params || []).filter(p => p.type === 'file')) {
+    lines.push(`  -F "${p.name}=@${apiFileSample(p)}"`);
+  }
+  const jsonParams = required.filter(p => p.type !== 'file');
+  if (jsonParams.length) {
     const obj = {};
-    for (const p of required) obj[p.name] = apiParamSample(p);
+    for (const p of jsonParams) obj[p.name] = apiParamSample(p);
     lines.push(`  -F 'params=${JSON.stringify(obj)}'`);
   }
   return lines.join(' \\\n');
+}
+
+/* API 文档左侧目录：点击跳转到对应工具的文档区块（scrollIntoView + 高亮同步） */
+let apiClickLockUntil = 0;   // 点击后的短暂窗口：平滑滚动过程中忽略滚动高亮，避免高亮被中途夺走
+
+function apiScrollTo(secId) {
+  const el = document.getElementById(secId);
+  if (!el) return;
+  apiClickLockUntil = Date.now() + 900;
+  el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  setApiActive(secId);
+}
+
+function setApiActive(secId) {
+  document.querySelectorAll('#apiSide .a-item').forEach(el => {
+    el.classList.toggle('active', el.dataset.target === secId);
+  });
+}
+
+// 滚动时同步高亮：取「标题已越过视口上方阈值」的最后一个区块；
+// 已滑到底时直接高亮末项（最后一个区块太短、未滚到阈值就会滑不动，否则永远点不亮）
+function updateApiActiveOnScroll() {
+  if ($('#viewApi').style.display === 'none') return;
+  if (Date.now() < apiClickLockUntil) return;   // 点击触发的平滑滚动期间不改高亮
+  const secs = document.querySelectorAll('#apiDoc .api-sec');
+  if (!secs.length) return;
+  const atBottom = window.innerHeight + window.scrollY >= document.body.scrollHeight - 2;
+  if (atBottom) { setApiActive(secs[secs.length - 1].id); return; }
+  let cur = null;
+  for (const sec of secs) {
+    if (sec.getBoundingClientRect().top <= 100) cur = sec.id; else break;
+  }
+  // 回到顶部时首个区块标题可能仍低于阈值（有页面内边距），此时直接高亮首项
+  setApiActive(cur || secs[0].id);
+}
+window.addEventListener('scroll', updateApiActiveOnScroll, { passive: true });
+
+// 侧边栏点击（事件委托，避免为每个条目内联 onclick）
+$('#apiSide').addEventListener('click', e => {
+  const item = e.target.closest('.a-item');
+  if (item && item.dataset.target) apiScrollTo(item.dataset.target);
+});
+
+// 插件 id -> 稳定的 DOM 锚点 id（id 可能含非常规字符，统一净化，跳转与 getElementById 保持一致）
+function apiSecId(pid) {
+  return 'api-sec-' + String(pid || '').replace(/[^A-Za-z0-9_-]/g, '_');
 }
 
 function renderApiDoc(plugins) {
@@ -974,8 +1292,25 @@ function renderApiDoc(plugins) {
       <span class="api-desc">${desc}</span>
     </div>`;
 
+  // 左侧目录条目：[区块 id, 显示名, 图标, 动作数]
+  const sideItems = [
+    ['api-sec-common', '通用约定', '', ''],
+    ['api-sec-endpoints', '通用接口', '', ''],
+    ['api-sec-run', '执行动作详解', '', ''],
+  ];
+  for (const p of plugins) {
+    sideItems.push([apiSecId(p.id), p.name || p.id, p.icon || '🧰', (p.actions || []).length]);
+  }
+  $('#apiSide').innerHTML = '<div class="a-title">目录</div>' + sideItems.map(([id, name, icon, count]) => `
+    <div class="a-item" data-target="${esc(id)}" title="${esc(name)}">
+      <span class="a-name">${esc(icon)} ${esc(name)}</span>
+      ${count ? `<span class="a-count">${count}</span>` : ''}
+    </div>`).join('');
+  setApiActive(sideItems[0][0]);
+  window.scrollTo(0, 0);   // 刷新目录时回到顶部，否则高亮与视口位置不一致
+
   // —— 通用约定 ——
-  let html = `<div class="api-sec">
+  let html = `<div class="api-sec" id="api-sec-common">
     <h3>通用约定</h3>
     <div class="api-sub">
       Base URL：<span class="api-base">${esc(base)}</span> · 服务只监听 127.0.0.1，所有处理都在本机完成，不上传任何第三方服务器<br>
@@ -986,9 +1321,10 @@ function renderApiDoc(plugins) {
   </div>`;
 
   // —— 通用接口 ——
-  html += `<div class="api-sec">
+  html += `<div class="api-sec" id="api-sec-endpoints">
     <h3>通用接口</h3>
     ${row('GET', '/api/plugins', '插件与动作清单（含每个动作的参数声明，本文档即由它生成）')}
+    ${row('GET', '/api/douban/book?url=…', '按豆瓣书籍链接抓取元数据（书名/作者/出版社/ISBN/简介/出版日期/封面），供电子书制作自动填充')}
     ${row('POST', '/api/plugins/{pid}/run/{aid}', '执行动作（multipart/form-data，字段见下）')}
     ${row('GET', '/api/progress/{task_id}', '查询执行进度，返回 {"progress": {"percent": 0-100, "message": "..."}} 或 null')}
     ${row('GET', '/downloads/{name}', '下载结果文件（一次性，取走即焚）')}
@@ -1000,13 +1336,14 @@ function renderApiDoc(plugins) {
   </div>`;
 
   // —— 执行动作详解 ——
-  html += `<div class="api-sec">
+  html += `<div class="api-sec" id="api-sec-run">
     <h3>执行动作：POST /api/plugins/{pid}/run/{aid}</h3>
     <div class="api-sub">multipart/form-data 编码，三个字段均可按需省略：</div>
     <table class="api-table">
       <tr><th style="width:18%">字段</th><th style="width:16%">类型</th><th>说明</th></tr>
       <tr><td>files</td><td>file，可重复</td><td>上传文件；动作声明 input 为 file / files 时必填，files 动作可重复该字段传多个</td></tr>
       <tr><td>params</td><td>JSON 字符串</td><td>动作参数，键名见各动作的参数表；可整体省略（全部取默认值）</td></tr>
+      <tr><td>&lt;参数名&gt;</td><td>file，可选</td><td>动作声明了 type 为 file 的参数时，用与其同名的字段上传该文件（如封面的 cover）；服务端落盘后把路径写回 params 同名键，插件侧无需区分</td></tr>
       <tr><td>task_id</td><td>文本，可选</td><td>8~32 位十六进制任务标识；不传则服务端自动生成（此时无法轮询进度）</td></tr>
     </table>
     <div class="api-sub" style="margin-top:10px">响应示例（files 数组每项含 name / url / size 及动作附加信息如 start、end、kind）：</div>
@@ -1057,7 +1394,7 @@ curl -OJ "${esc(base)}/downloads/{name}"<span class="copy-tip">已复制</span><
       <div class="api-sub" style="margin-top:10px">扫码登录（先 start 拿二维码图片，再轮询 poll 直到 confirmed）：</div>
       <div class="api-code">curl -X POST "${esc(base)}/api/login/${esc(p.id)}/start"
 curl "${esc(base)}/api/login/${esc(p.id)}/poll"<span class="copy-tip">已复制</span></div>` : '';
-    html += `<div class="api-sec">
+    html += `<div class="api-sec" id="${esc(apiSecId(p.id))}">
       <h3>${esc(p.icon || '🧰')} ${esc(p.name)}<span class="api-base">${esc(p.id)}</span>${loginBadge}</h3>
       <div class="api-sub">${esc(p.description || '')}</div>
       ${actionBlocks}
@@ -1085,6 +1422,7 @@ function openApiDoc() {
   $('#viewHome').style.display = 'none';
   $('#viewApi').style.display = 'block';
   $('#btnBack').style.display = 'block';
+  window.scrollTo(0, 0);   // 从首页滚到一半的位置进来时，文档页也从顶部开始
   loadApiDoc();
 }
 
@@ -1149,7 +1487,7 @@ function closeSettings() {
   if (settingsReturnView === 'tool' && current) $('#viewTool').style.display = 'block';
   // 同步 apiOpen 与 viewApi 的显示，否则下次点 API 文档按钮的 toggle 会失效
   else if (settingsReturnView === 'api') { apiOpen = true; $('#viewApi').style.display = 'block'; }
-  else $('#viewHome').style.display = 'block';
+  else showHome();
 }
 
 async function loadSettings() {

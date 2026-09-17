@@ -1,7 +1,7 @@
 {
   "id": "ebook_maker",
   "name": "电子书制作",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "TXT / Markdown / EPUB 互转，自动识别章节标题，支持封面与元数据",
   "icon": "📚",
   "actions": [
@@ -16,17 +16,18 @@
     {
       "id": "md_to_epub",
       "name": "Markdown → EPUB",
-      "description": "MD 打包 EPUB，支持封面与元数据",
+      "description": "MD 打包 EPUB，支持封面与元数据（可从豆瓣链接一键填充）",
       "input": "file",
       "accept": ".md,.markdown",
+      "douban": true,
       "params": [
         { "name": "title", "label": "书名", "type": "text", "placeholder": "默认取文件名", "hint": "留空则使用文件名" },
         { "name": "author", "label": "作者", "type": "text" },
         { "name": "publisher", "label": "出版社", "type": "text" },
         { "name": "isbn", "label": "ISBN", "type": "text" },
-        { "name": "cover", "label": "封面", "type": "text", "placeholder": "本地路径或 http(s) 图片链接" },
+        { "name": "cover", "label": "封面", "type": "file", "accept": ".jpg,.jpeg,.png,.gif,.webp,.bmp", "allowUrl": true, "hint": "可点击/拖拽上传本地图片，或粘贴图片链接；从豆瓣填充时会自动带上封面" },
         { "name": "date", "label": "出版日期", "type": "text", "placeholder": "如 2026-01-01" },
-        { "name": "description", "label": "简介", "type": "text" },
+        { "name": "description", "label": "简介", "type": "text", "rows": 4, "placeholder": "可从豆瓣链接自动填充" },
         { "name": "rights", "label": "版权信息", "type": "text" },
         { "name": "subject", "label": "分类", "type": "text" }
       ]
@@ -34,17 +35,18 @@
     {
       "id": "txt_to_epub",
       "name": "TXT → EPUB",
-      "description": "TXT 一站式转 EPUB，含章节识别与元数据",
+      "description": "TXT 一站式转 EPUB，含章节识别与元数据（可从豆瓣链接一键填充）",
       "input": "file",
       "accept": ".txt",
+      "douban": true,
       "params": [
         { "name": "title", "label": "书名", "type": "text", "placeholder": "默认取文件名", "hint": "留空则使用文件名" },
         { "name": "author", "label": "作者", "type": "text" },
         { "name": "publisher", "label": "出版社", "type": "text" },
         { "name": "isbn", "label": "ISBN", "type": "text" },
-        { "name": "cover", "label": "封面", "type": "text", "placeholder": "本地路径或 http(s) 图片链接" },
+        { "name": "cover", "label": "封面", "type": "file", "accept": ".jpg,.jpeg,.png,.gif,.webp,.bmp", "allowUrl": true, "hint": "可点击/拖拽上传本地图片，或粘贴图片链接；从豆瓣填充时会自动带上封面" },
         { "name": "date", "label": "出版日期", "type": "text", "placeholder": "如 2026-01-01" },
-        { "name": "description", "label": "简介", "type": "text" }
+        { "name": "description", "label": "简介", "type": "text", "rows": 4, "placeholder": "可从豆瓣链接自动填充" }
       ]
     },
     {

@@ -15,10 +15,14 @@ from pathlib import Path
 from urllib.parse import quote
 
 import uvicorn
-from fastapi import BackgroundTasks, FastAPI, File, Form, UploadFile
+from fastapi import BackgroundTasks, FastAPI, Query, Request, UploadFile
 from fastapi.concurrency import run_in_threadpool
 from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
 from pydantic import BaseModel
+
+# request.form() 返回的是 Starlette 的 UploadFile；FastAPI 的 UploadFile 是它的子类，
+# isinstance 判断必须用基类（否则永远为 False）。
+from starlette.datastructures import UploadFile as FormUploadFile
 
 from . import deps
 from .registry import DOWNLOADS_DIR, TMP_DIR, PluginRegistry
@@ -146,19 +150,87 @@ def list_plugins():
     return {"plugins": registry.list_plugins()}
 
 
+@app.get("/api/douban/book")
+async def douban_book(url: str = Query("", description="豆瓣书籍链接或 subject id")):
+    """按豆瓣书籍链接抓取元数据（书名/作者/出版社/ISBN/简介/出版日期/封面）。
+
+    联网阻塞操作放到线程池，避免拖住事件循环；解析失败一律返回
+    {"success": False, "error": "…"}，错误消息面向用户可直接展示。
+    """
+    from . import douban
+
+    try:
+        meta = await run_in_threadpool(douban.fetch_book_meta, url, True)
+        return {"success": True, "book": meta}
+    except douban.DoubanError as exc:
+        return {"success": False, "error": str(exc)}
+    except Exception as exc:  # noqa: BLE001
+        return {"success": False, "error": f"抓取失败：{exc}"}
+
+
+async def _save_uploads(uploads, workdir: Path, used_names: set[str]) -> list[str]:
+    """把上传文件落到本次任务的临时目录，返回保存后的路径列表。
+
+    文件名来自客户端、不可信：只取 basename、净化路径分隔符与 Windows 非法字符；
+    同名文件（含净化后撞名）追加序号，防止互相覆盖。
+    """
+    out: list[str] = []
+    for upload in uploads:
+        raw = Path(upload.filename or "").name
+        safe = re.sub(r'[\\/:*?"<>|\r\n\t]+', "_", raw).strip(" ._") or "file"
+        stem, ext = Path(safe).stem, Path(safe).suffix
+        name = safe
+        idx = 2
+        while name in used_names:
+            name = f"{stem}_{idx}{ext}"
+            idx += 1
+        used_names.add(name)
+        target = workdir / name
+        target.write_bytes(await upload.read())
+        out.append(str(target))
+    return out
+
+
 @app.post("/api/plugins/{pid}/run/{aid}")
-async def run_action(pid: str, aid: str, files: list[UploadFile] | None = File(None),
-                     params: str = Form("{}"), task_id: str = Form("")):
+async def run_action(pid: str, aid: str, request: Request):
     """执行插件动作：按需加载插件代码 -> 调用对应函数 -> 返回下载链接。
 
-    task_id：前端生成的任务标识，用于轮询执行进度（/api/progress/{task_id}）。
+    multipart/form-data 字段：
+      - files：待处理文件（可重复），动作声明 input 为 file / files 时必填
+      - params：JSON 字符串，动作参数；可整体省略
+      - task_id：任务标识，用于轮询执行进度（/api/progress/{task_id}）
+      - <参数名>：动作声明了 type 为 file 的参数时，用「与参数同名的字段」上传该文件
+        （如电子书封面的 cover）。服务端保存到本次任务临时目录，并把落盘路径写回
+        params[参数名] 传给插件，因此插件侧照旧从 params 里取路径即可。
     """
     manifest, action = registry.get_action(pid, aid)
     if not manifest or not action:
         return JSONResponse({"success": False, "error": f"插件/动作不存在: {pid}/{aid}"}, status_code=404)
 
+    # 手动解析表单：需要区分「待处理文件」与「文件型参数」两类上传，
+    # FastAPI 的签名式声明无法表达「字段名由 manifest 决定」。
+    form = await request.form()
+
+    def _form_str(key: str) -> str:
+        value = form.get(key)
+        return value if isinstance(value, str) else ""
+
+    # 允许上传的文件型参数名（由 manifest 声明决定，其余上传字段一律忽略）
+    file_param_names = {p.get("name") for p in (action.get("params") or [])
+                        if p.get("type") == "file"}
+    input_uploads: list[UploadFile] = []
+    param_uploads: dict[str, UploadFile] = {}
+    for key, value in form.multi_items():
+        if not isinstance(value, FormUploadFile) or not value.filename:
+            continue
+        if key == "files":
+            input_uploads.append(value)
+        elif key in file_param_names:
+            param_uploads[key] = value   # 同名重复时以最后一个为准
+
     # 工作目录：一次任务一个临时目录；任务标识不合法时退回服务端生成。
     # exist_ok=True：前端失败重试可能复用同一 task_id，目录残留时不至于 500
+    task_id = _form_str("task_id")
     if not re.fullmatch(r"[0-9a-f]{8,32}", task_id or ""):
         task_id = uuid.uuid4().hex
     workdir = TMP_DIR / task_id
@@ -176,29 +248,19 @@ async def run_action(pid: str, aid: str, files: list[UploadFile] | None = File(N
         if not fn:
             return JSONResponse({"success": False, "error": f"插件 {pid} 未实现动作 {aid}"}, status_code=500)
 
-        # 保存上传文件。文件名来自客户端、不可信：只取 basename、净化路径分隔符
-        # 与 Windows 非法字符；同名文件（含净化后撞名）追加序号，防止互相覆盖
-        saved: dict[str, list[str]] = {}
+        # 保存上传文件（待处理文件 + 文件型参数共用一份命名去重表，避免互相覆盖）
         used_names: set[str] = set()
-        for upload in files or []:
-            raw = Path(upload.filename or "").name
-            safe = re.sub(r'[\\/:*?"<>|\r\n\t]+', "_", raw).strip(" ._") or "file"
-            stem, ext = Path(safe).stem, Path(safe).suffix
-            name = safe
-            idx = 2
-            while name in used_names:
-                name = f"{stem}_{idx}{ext}"
-                idx += 1
-            used_names.add(name)
-            target = workdir / name
-            target.write_bytes(await upload.read())
-            saved.setdefault("files", []).append(str(target))
+        saved: dict[str, list[str]] = {"files": await _save_uploads(input_uploads, workdir, used_names)}
 
         # 解析参数（前端传 JSON 字符串），并注入进度回调供插件上报进度
         try:
-            param_dict = json.loads(params or "{}")
+            param_dict = json.loads(_form_str("params") or "{}")
         except json.JSONDecodeError:
             param_dict = {}
+        # 文件型参数落盘后覆盖同名文本参数：插件侧只认 params 里的路径，无需感知来源
+        for pname, upload in param_uploads.items():
+            paths = await _save_uploads([upload], workdir, used_names)
+            param_dict[pname] = paths[0]
         param_dict["_progress"] = _report_progress(task_id)
 
         # 调用插件（转换类任务通常为 CPU/IO 密集；批量下载可能持续很久，
